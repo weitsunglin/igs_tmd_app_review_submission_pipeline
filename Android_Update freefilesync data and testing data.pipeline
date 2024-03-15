@@ -1,0 +1,299 @@
+pipeline {
+    agent any
+
+     parameters {
+        string(name: 'BUILDER_NAME', defaultValue: 'weitsunglin', description: '你的名字')
+        string(name: 'NEW_VERSION', defaultValue: '1.1.xxx', description: '版本號:安卓單數1.1.175/IOS雙數1.1.184')
+    }
+
+    environment {
+        REMOTE4463_CREDENTIALS ='remote4463_login'
+        SVN_INSTALL_PATH = '/opt/homebrew/bin/svn'
+        svnCommitMessage = ''
+        filePath = ''
+        PROJ_ANDROID_URL = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/"
+        SVM_CREDENTIALS_ID = '97731a4e-685d-4356-8c2b-d902c44ed6e9'
+        versionsUpdated = false
+        GAMEENV = 'Android'
+        REMOTE_CREDENTIALS ='remote4463_login'
+
+    }
+
+    stages {
+         stage('Parameter Check') {
+            steps {
+                script {
+                    if (params.NEW_VERSION == '1.1.xxx') {
+                        error("The NEW_VERSION parameter is set to '1.1.xxx', which is a placeholder and not a valid version name. Pipeline execution is terminated to prevent build configuration errors.")
+                    }
+                    SVN = "${env.SVN_INSTALL_PATH}/svn"
+
+                     // Extract the last segment of the NEW_VERSION parameter
+                    def versionCode = params.NEW_VERSION.tokenize('.').last() as Integer
+                    
+                    // Determine if the versionCode is odd or even
+                    def isEven = versionCode % 2 == 0
+                    
+                    // Check the game environment and version compatibility
+                    if ((isEven && GAMEENV != 'iOS') || (!isEven && GAMEENV != 'Android')) {
+                        error("The selected GAMEENV is incompatible with the NEW_VERSION. For even versions, select 'iOS'. For odd versions, select 'Android'. Pipeline execution is terminated to prevent build configuration errors.")
+                    }
+                }
+            }
+        }
+
+        stage('Update Version Info') {
+            steps {
+                script {
+                    filePath = '/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/targetVersion.json'
+                    
+                    def versionsFile = readFile filePath
+                    def versions = readJSON text: versionsFile
+                    String platform = GAMEENV
+                   
+                    String newVersion = params.NEW_VERSION
+
+                    if (versions.containsKey(platform)) {
+                        if (!versions[platform].contains(newVersion)) {
+                            versions[platform].add(newVersion)
+                            def updatedVersions = writeJSON returnText: true, json: versions
+                            writeFile file: filePath, text: updatedVersions
+
+                            echo "Updated versions: ${versions}"
+
+                            svnCommitMessage = "Updated targetversion from 2412 jenkins ${platform} version to ${newVersion}"
+                            versionsUpdated = true
+                        } 
+                        else {
+                            echo "Version $newVersion already exists for $platform, not adding it again."
+                            versionsUpdated = false
+                        }
+                    } else {
+                        echo "Platform $platform does not exist."
+                        versionsUpdated = false
+                    }
+                }
+            }
+        }
+
+        stage('SVN commit target version') {
+            steps {
+                script{
+                    echo 'SVN commit target version'
+                    dir(PROJ_ANDROID_URL){
+                        if (versionsUpdated) {
+                            echo 'Proceeding with SVN commit...'
+                            def commitMessage = "jenkins 2412 auto commit target version"
+                            svnCommit(filePath, commitMessage)
+                        } 
+                        else {
+                            echo 'No version updates to commit.'
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('ReplaceBatchFlie') {
+            steps {
+                script{
+                    echo 'ReplaceBatchFlie'
+                    def svn = "/opt/homebrew/bin/svn"                    
+                    withCredentials([usernamePassword(credentialsId: SVM_CREDENTIALS_ID, usernameVariable: 'SVN_USER', passwordVariable: 'SVN_PASSWORD')]) {
+                        sh """
+                        ${svn} update /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/targetVersion.json --username \$SVN_USER --password \$SVN_PASSWORD --non-interactive
+                        """
+                    }
+
+                    sh "/Users/tmd/Documents/tmd/SouthPark/Jenkins/SyncFileTemp/replace_jenkins.sh ${GAMEENV}"
+                }
+            }
+        }
+
+        stage('Move ffsBatch') {
+            steps {
+                script{
+                    echo 'Move ffsBatch'
+                     def destinationFolder = ""
+                        if (GAMEENV =='Android') {
+                           destinationFolder= "/Volumes/TMD_PUBLIC/TMD/testing/android/"
+                        } 
+                        else {
+                            destinationFolder= "/Volumes/TMD_PUBLIC/TMD/testing/ios/"
+                        }
+                    def sourceFolder = "/Users/tmd/Documents/tmd/SouthPark/Jenkins/SyncFileTemp/Output/"
+                    sh "cp -r ${sourceFolder}* ${destinationFolder}"
+                }
+            }
+        }
+
+        stage('Create ffs_batch') {
+            steps {
+                script{
+                    dir(PROJ_ANDROID_URL){
+                        // 生成 .ffs_batch 文件内容
+                        def ffsContent = generateFfsBatchContent(params.NEW_VERSION)
+                        writeFile file: 'TMD_testing_new_version_to_4055.ffs_batch', text: ffsContent
+
+                        //複製搬移資料夾的bat到44.63
+                        def destinationFolder = "/Volumes/TMD_PUBLIC/TMD/testing/"
+                        def sourceFolder = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/TMD_testing_new_version_to_4055.ffs_batch"
+                        sh "cp -r ${sourceFolder}* ${destinationFolder}"
+                    }
+                }
+            }
+        }
+
+        stage('Create new Version resources in 4463') {
+            steps {
+                script{
+                    //REMOTE
+                    withCredentials([usernamePassword(credentialsId: REMOTE_CREDENTIALS, passwordVariable: 'REMOTE_PASSWORD', usernameVariable: 'REMOTE_USER')]) {
+                        def remote = getRemoteConfig("192.168.44.63", REMOTE_USER, REMOTE_PASSWORD)
+
+                        def sourceFolder = GAMEENV == 'iOS' ? "D:\\TMD_PUBLIC\\TMD\\testing\\ios" : "D:\\TMD_PUBLIC\\TMD\\testing\\android"
+                        def newVersionFolder = "D:\\TMD_PUBLIC\\TMD\\testing\\${params.NEW_VERSION}"
+
+                        // 检查目标目录是否存在，如果不存在，则创建目录并复制文件
+                        def checkAndCopyCmd = "if not exist \"${newVersionFolder}\" (mkdir \"${newVersionFolder}\" && xcopy /E /I \"${sourceFolder}\\*\" \"${newVersionFolder}\")"
+                        sshCommand remote: remote, command: checkAndCopyCmd
+                    }
+                }
+            }
+        }
+
+        //44.63 create new version resources base on android or ios, and using free file sync throw the resources to 40.55
+        stage('Move testing game resources to 4055') {
+            steps {
+                script{
+                    echo '4055 New testing version resources folder'
+
+                    //REMOTE
+                    withCredentials([usernamePassword(credentialsId: REMOTE_CREDENTIALS, passwordVariable: 'REMOTE_PASSWORD', usernameVariable: 'REMOTE_USER')]) {
+                        def remote = getRemoteConfig("192.168.44.63", REMOTE_USER, REMOTE_PASSWORD)
+                        try {
+                            sshCommand remote: remote, 
+                                command: "D:/TMD_PUBLIC/TMD/testing/on_TMD_testing_new_version_to_4055.bat"
+                        } catch (Exception e) {
+                            echo "An error occurred while executing FreeFileSync.exe, but it's being ignored."
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Good guy will clean environment') {
+            steps {
+                script{
+                    // 刪除本地的 TMD_testing_new_version_to_4055.ffs_batch 文件
+                    dir(PROJ_ANDROID_URL){
+                        echo 'rm -f TMD_testing_new_version_to_4055.ffs_batch'
+                        sh "rm -f TMD_testing_new_version_to_4055.ffs_batch"    
+                    }
+
+
+                     //刪除44.63上的1.1.186資料夾
+                    withCredentials([usernamePassword(credentialsId: REMOTE_CREDENTIALS, passwordVariable: 'REMOTE_PASSWORD', usernameVariable: 'REMOTE_USER')]) {
+                        def remote = getRemoteConfig("192.168.44.63", REMOTE_USER, REMOTE_PASSWORD)
+                        try {
+                            sshCommand remote: remote, command: "rmdir /s /q \"D:/TMD_PUBLIC/TMD/testing/${params.NEW_VERSION}\""
+                        } catch (Exception e) {
+                            echo "An error occurred while executing FreeFileSync.exe, but it's being ignored."
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            emailext(
+                subject: "${currentBuild.currentResult} Update freefilesync data and testing data",
+                body: "${currentBuild.currentResult}, Update freefilesync data and testing data",
+                to: "${params.BUILDER_NAME}@igs.com.tw"
+            )
+        }
+    }
+}
+
+def getRemoteConfig(host, user, password) {
+    def remote = [:]
+    remote.name = user
+    remote.host = host
+    remote.user = user
+    remote.password = password
+    remote.allowAnyHosts = true
+    return remote
+}
+
+def svnCommit(String filePath, String commitMessage) {
+    def svn = "${env.SVN_INSTALL_PATH}"
+
+    withCredentials([usernamePassword(credentialsId: SVM_CREDENTIALS_ID, usernameVariable: 'SVN_USER', passwordVariable: 'SVN_PASSWORD')]) {
+        sh "${svn} commit -m '${commitMessage}' --username ${SVN_USER} --password ${SVN_PASSWORD} ${filePath}"
+    }
+}
+
+def generateFfsBatchContent(String newVersion) {
+    String template = '''<?xml version="1.0" encoding="utf-8"?>
+<FreeFileSync XmlType="BATCH" XmlFormat="19">
+    <Notes/>
+    <Compare>
+        <Variant>Content</Variant>
+        <Symlinks>Exclude</Symlinks>
+        <IgnoreTimeShift/>
+    </Compare>
+    <Synchronize>
+        <Variant>Mirror</Variant>
+        <DetectMovedFiles>false</DetectMovedFiles>
+        <DeletionPolicy>RecycleBin</DeletionPolicy>
+        <VersioningFolder Style="Replace"/>
+    </Synchronize>
+    <Filter>
+        <Include>
+            <Item>*</Item>
+        </Include>
+        <Exclude>
+            <Item>\\System Volume Information\\</Item>
+            <Item>\\$Recycle.Bin\\</Item>
+            <Item>\\RECYCLER\\</Item>
+            <Item>\\RECYCLED\\</Item>
+            <Item>*\\desktop.ini</Item>
+            <Item>*\\thumbs.db</Item>
+            <Item>*\\.Ds_Store</Item>
+            <Item>*\\WebEnvironment.xml</Item>
+            <Item>*\\LocalVersion.json</Item>
+            <Item>*\\AllVersion.json</Item>
+            <Item>*\\CheckVersion.json</Item>
+            <Item>*\\update.ffs_batch</Item>
+            <Item>*\\update.bat</Item>
+        </Exclude>
+        <SizeMin Unit="None">0</SizeMin>
+        <SizeMax Unit="None">0</SizeMax>
+        <TimeSpan Type="None">0</TimeSpan>
+    </Filter>
+    <FolderPairs>
+        <Pair>
+            <Left>D:\\TMD_PUBLIC\\TMD\\testing\\_newVersion_</Left>
+            <Right>\\\\10.100.40.55\\webgame\\Game\\TMD_mobile_test\\data\\_newVersion_</Right>
+        </Pair>
+    </FolderPairs>
+    <Errors Ignore="true" Retry="0" Delay="5"/>
+    <PostSyncCommand Condition="Completion"/>
+    <LogFolder/>
+    <EmailNotification Condition="Always"/>
+    <GridViewType>Action</GridViewType>
+    <Batch>
+        <ProgressDialog Minimized="false" AutoClose="true"/>
+        <ErrorDialog>Show</ErrorDialog>
+        <PostSyncAction>None</PostSyncAction>
+    </Batch>
+</FreeFileSync>'''
+
+
+    template = template.replaceAll("_newVersion_", newVersion)
+    
+    
+    return template
+}

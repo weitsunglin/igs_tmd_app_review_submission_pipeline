@@ -1,0 +1,205 @@
+def SVN_URLS = []
+
+pipeline {
+    agent any
+
+    environment {
+        SVN_INSTALL_PATH = '/opt/homebrew/bin/svn'
+        SVM_CREDENTIALS_ID = '97731a4e-685d-4356-8c2b-d902c44ed6e9'
+        PROJ_ANDROID_URL = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/"
+        TMD_RESOURCES_URL = "/Users/tmd/Documents/tmd/"
+        BUILD_SHELL_FILE = ""
+        GAMEVERSION = ''
+    }
+
+    parameters {
+        string(name: 'BUILDER_NAME', defaultValue: 'weitsunglin', description: '你的名字')
+        choice(name: 'GAME_VERSION', choices: ['android', 'ios'], description: '遊戲平台')
+        string(name: 'ANDROID_RESOURCES', defaultValue: 'Cocos2d-x Inanna', description: 'Android資源')
+        string(name: 'IOS_RESOURCES', defaultValue: 'Cocos2d-x Inanna TrainingFish TrainingMJ TrainingSlot OceanTale EgyptSlot ManganDahen', description: 'IOS資源')      
+    }
+
+    stages {
+        stage('Get Game SVN Path') {
+            steps {
+                script { 
+                    dir( PROJ_ANDROID_URL ) {
+                        GAMEVERSION = params.GAME_VERSION
+                        def output = ""
+
+                        if (GAMEVERSION =='android') {
+                           output = sh(script: "python3 read_google_sheet.py ${params.GAME_VERSION} ${params.ANDROID_RESOURCES}", returnStdout: true).trim()
+                           SVN_URLS = output.split('\n')
+                        } 
+                        else {
+                           output = sh(script: "python3 read_google_sheet.py ${params.GAME_VERSION} ${params.IOS_RESOURCES}", returnStdout: true).trim()
+                           SVN_URLS = output.split('\n')
+                        }
+                        
+                        echo "版本路徑撈取: ${output}"
+                       
+                    }
+                }
+            }
+        }
+
+        stage('Game Switch Path using SVN') {
+            steps {
+                script {
+                    for( url in SVN_URLS ) {
+                        def cleanedOutput = url.replaceAll("[\\[\\]' ]", "")
+                        def elements = cleanedOutput.split(",")
+
+                        def gameName = elements[0]
+                        def gameUrl = elements[1]
+
+                        echo "Game Name: ${gameName}"
+                        echo "Game URL: ${gameUrl}"
+
+                        dir( TMD_RESOURCES_URL + gameName + "/" ) {
+                            withCredentials([usernamePassword(credentialsId: SVM_CREDENTIALS_ID, usernameVariable: 'SVN_USER', passwordVariable: 'SVN_PASSWORD')]) {
+                                echo "${gameName} 切换到 SVN URL: ${gameUrl}"
+                                sh(script: "${SVN_INSTALL_PATH} switch ${gameUrl} --username \$SVN_USER --password \$SVN_PASSWORD")
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+       stage('Lua Encode Dat') {
+            steps {
+                dir( PROJ_ANDROID_URL ) {
+                    script { 
+                        BUILD_SHELL_FILE = "Build_Release_Encode.sh" 
+                        sh 'chmod +x /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/Build_Release_Encode.sh'
+                    }
+                }
+            }
+        }
+
+        stage('Modify build-cfg-original.json') {
+            steps {      
+                script { 
+                    def resourcesArray = []
+                    
+                    for(url in SVN_URLS) {
+                        def cleanedOutput = url.replaceAll("[\\[\\]' ]", "")
+                        def elements = cleanedOutput.split(",")
+                        def gameName = elements[0]
+
+                        if (gameName == "Cocos2d-x") {
+                            resourcesArray.add("""
+                            {
+                                "from": "../../../${gameName}/cocos/scripting/lua-bindings/script",
+                                "to": "cocos",
+                                "zip": false
+                            }
+                            """.trim())
+                        } 
+                        else if (gameName == "Inanna"){
+                            resourcesArray.add("""
+                            {
+                                "from": "../../../${gameName}/${gameName}Resource",
+                                "to": "${gameName}Resource",
+                                "zip": true
+                            },
+                            {
+                                "from": "../../../${gameName}/${gameName}Lua",
+                                "to": "${gameName}Lua",
+                                "zip": true
+                            }
+                            """.trim())
+                        }
+                        else if (gameName == "ManganDahen"){
+                            resourcesArray.add("""
+                            {
+                                "from": "../../../${gameName}/ClientCocos/MDResource",
+                                "to": "MDResource",
+                                "zip": true
+                            },
+                            {
+                                "from": "../../../${gameName}/ClientCocos/MDLua",
+                                "to": "MDLua",
+                                "zip": true
+                            }
+                            """.trim())
+                        }
+                        else if (gameName == "TMD_StarPoseidon"){
+                            resourcesArray.add("""
+                            {
+                                "from": "../../../${gameName}/ClientCocos/StarPoseidonResource",
+                                "to": "StarPoseidonResource",
+                                "zip": true
+                            },
+                            {
+                                "from": "../../../${gameName}/ClientCocos/StarPoseidonLua",
+                                "to": "StarPoseidonLua",
+                                "zip": true
+                            }
+                            """.trim())
+                        }
+                        else{
+                            resourcesArray.add("""
+                            {
+                                "from": "../../../${gameName}/ClientCocos/${gameName}Resource",
+                                "to": "${gameName}Resource",
+                                "zip": true
+                            },
+                            {
+                                "from": "../../../${gameName}/ClientCocos/${gameName}Lua",
+                                "to": "${gameName}Lua",
+                                "zip": true
+                            }
+                            """.trim())
+                        }
+                    }
+
+                    def jsonContent = """{
+                        "copy_resources": [
+                            ${resourcesArray.join(",\n")}
+                        ]
+                    }"""
+
+                    writeFile file: PROJ_ANDROID_URL+"build-cfg-original.json", text: jsonContent
+                }
+            }
+        }
+
+        stage('Packing') {
+            steps {
+                dir(PROJ_ANDROID_URL) {
+                    script{
+                         sh "rm -rf /Users/tmd/Documents/tmd/SouthPark/ClientCocos/bin/release/tmp*"
+                         sh "./${BUILD_SHELL_FILE} release"
+                    }
+                }
+            }
+        }
+
+        stage('Clean Build CFG Original') {
+            steps {
+                script {
+                    for(url in SVN_URLS) {                        
+                        dir(PROJ_ANDROID_URL) {
+                        script {
+                            def svnRevertCmd = "${SVN_INSTALL_PATH} revert ${PROJ_ANDROID_URL + "build-cfg-original.json"}"
+                            sh(svnRevertCmd)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            emailext(
+                subject: "遊戲資源打包: ${currentBuild.currentResult}",
+                body: "打包結果: ${currentBuild.currentResult}，打包資源位置在(192.168.123.123): SouthPark\\ClientCocos\\bin\\release\\tmp\\",
+                to: "${params.BUILDER_NAME}@igs.com.tw"
+            )
+        }
+    }
+}

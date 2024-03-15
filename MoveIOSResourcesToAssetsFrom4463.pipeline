@@ -1,0 +1,228 @@
+pipeline {
+    agent any
+
+    environment {
+        PROJ_ANDROID_URL = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/"
+        SVN_INSTALL_PATH = '/opt/homebrew/bin/svn'
+        TMD_IOS_SOURCE = "/Volumes/TMD_PUBLIC/TMD/testing/ios"
+        BASIC_GAME = 'TrainingFish TrainingMJ TrainingSlot OceanTale EgyptSlot ManganDahen'
+        SVM_CREDENTIALS_ID = '97731a4e-685d-4356-8c2b-d902c44ed6e9'
+    }
+
+    parameters {
+        string(name: 'BUILDER_NAME', defaultValue: 'weitsunglin', description: '你的名字')
+        string(name: 'IOS_RESOURCES', defaultValue: 'DevilFire Caishen3 Volcano', description: 'IOS送審遊戲-避免載哩哩扣扣，問營運')      
+    }
+
+    stages {
+
+        stage('Pack cocos') {
+            steps {
+                script {
+                    echo'Pack cocos'
+
+                    dir( PROJ_ANDROID_URL ) {
+                        script { 
+                            def jsonContent = """{
+                                "copy_resources": [
+                                    {
+                                        "from": "../../../Cocos2d-x/cocos/scripting/lua-bindings/script",
+                                        "to": "cocos",
+                                        "zip": false
+                                    },
+                                    {
+                                        "from": "../../../Inanna/InannaLua",
+                                        "to": "InannaLua",
+                                        "zip": true
+                                    },
+                                    {
+                                        "from": "../../../Inanna/InannaResource",
+                                        "to": "InannaResource",
+                                        "zip": true
+                                    }
+                                ]
+                            }"""
+                            writeFile file: PROJ_ANDROID_URL+"build-cfg-original.json", text: jsonContent
+
+                            sh "rm -rf /Users/tmd/Documents/tmd/SouthPark/ClientCocos/bin/release/tmp*"
+
+                            BUILD_SHELL_FILE = "Build_Release_Encode.sh" 
+                            sh 'chmod +x /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/Build_Release_Encode.sh'
+                            sh "./${BUILD_SHELL_FILE} release"
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Good Guy cleaning build-cfg-original.json') {
+            steps {
+                script {
+                    echo'Move PackingData to Android Assets from 4463'
+                    dir(PROJ_ANDROID_URL) {
+                        script {
+                            def svnRevertCmd = "${SVN_INSTALL_PATH} revert ${PROJ_ANDROID_URL + "build-cfg-original.json"}"
+                            sh(svnRevertCmd)
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Move cocos Resource to IOS Assets') {
+            steps {
+                script {
+                    echo'Move cocos to IOS Assets'
+                    script {
+                        sh "rm -rf /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/*"
+                        sh  "cp -r /Users/tmd/Documents/tmd/SouthPark/ClientCocos/bin/release/tmp/cocos /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/"
+                        sh "chmod +x /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/cocos"
+                    }
+                }
+            }
+        }
+
+
+        stage('Move Inanna Resource to Ios Assets from 4463') {
+            steps {
+                script {
+                    echo'Move PackingData to Android Assets from 4463'
+
+                    // 定義源資料夾
+                    def luaSource = '/Volumes/TMD_PUBLIC/TMD/testing/ios/Inanna/InannaLua'
+                    def resourcesSource = '/Volumes/TMD_PUBLIC/TMD/testing/ios/Inanna/InannaResource'
+
+                    // 定義目標目錄
+                    def targetDirectory = '/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/'
+
+                    // 搬移 InannaLua 和 InannaResource 資料夾到目標目錄
+                    sh "cp -R ${luaSource} ${targetDirectory}"
+                    sh "cp -R ${resourcesSource} ${targetDirectory}"
+
+                    decompressZipFiles("/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/InannaLua")
+                    decompressZipFiles("/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/InannaResource")
+                }
+            }
+        }
+
+
+        stage('Move Basic Game Resource to IOS Assets from 4463') {
+            steps {
+                script {
+                    echo "Move PackingData to IOS Assets from 4463"
+                    def resources = BASIC_GAME.split(" ")
+                    resources.each { resourceName ->
+                        def sourceSubDir = resourceName
+                        def sourcePath = "${env.TMD_IOS_SOURCE}/${sourceSubDir}"
+                        def matchingFolders = sh(script: "find ${sourcePath} -type d \\( -name '*Lua' -o -name '*Resources' \\)", returnStdout: true).trim().split("\n")
+
+                        matchingFolders.each { folderPath ->
+                            def destinationPath = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/"
+                            sh "cp -R ${folderPath} ${destinationPath}"
+                        }
+
+                        def path = ""
+
+                        if (sourceSubDir == 'ManganDahen') {
+                            path = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/MDLua"
+                        } else if (sourceSubDir == 'XXX') {
+                            path = ""
+                        } else {
+                            path = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/${sourceSubDir}Lua"
+                        }
+
+                        decompressZipFiles(path)
+                    }
+                }
+            }
+        }
+
+        stage('Move Review Game Resource to IOS Assets from 4463') {
+            steps {
+                script {
+                    echo "Move PackingData to IOS Assets from 4463"
+                    def resources = params.IOS_RESOURCES.split(" ")
+                    resources.each { resourceName ->
+                        def sourceSubDir = resourceName
+                        def sourcePath = "${env.TMD_IOS_SOURCE}/${sourceSubDir}"
+                        def matchingFolders = sh(script: "find ${sourcePath} -type d \\( -name '*Lua' -o -name '*Resources' \\)", returnStdout: true).trim().split("\n")
+
+                        matchingFolders.each { folderPath ->
+                            def destinationPath = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/"
+                            sh "cp -R ${folderPath} ${destinationPath}"
+                        }
+
+                        def path = ""
+
+                        if (sourceSubDir == 'XXX') {
+                            path = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/XXXLua"
+                        }  else {
+                            path = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/${sourceSubDir}Lua"
+                        }
+                         decompressZipFiles(path)
+                    }
+                }
+            }
+        }
+
+        stage('Good Guy Clean Up') {
+            steps {
+                script {
+                     // 定義目標目錄
+                    def targetDirectory = '/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/'
+                    
+                    // 删除 .zip 文件
+                    sh """
+                    find ${targetDirectory} -type f -name '*.zip' -exec rm {} \\;
+                    """
+                }
+            }
+        }
+
+        stage('CheckOut WebEnviornment') {
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: SVM_CREDENTIALS_ID, usernameVariable: 'SVN_USER', passwordVariable: 'SVN_PASSWORD')]) {
+                        sh "chmod +x /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/InannaLua"
+                        sh "mkdir -p /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/InannaLua"
+                        sh "${SVN_INSTALL_PATH} export http://192.168.1.183/svn/Inanna/trunk/InannaLua/WebEnvironment.xml --depth files /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/InannaLua --username ${SVN_USER} --password ${SVN_PASSWORD}"
+                    }
+                }
+            }
+        }
+
+        stage('Give permission') {
+            steps {
+                script {
+                   sh "find /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/ -type f -exec chmod 666 {} \\;"
+                }
+            }
+        }
+        
+    }
+
+    post {
+        always {
+            emailext(
+                subject: "搬移IOS遊戲資源結果: ${currentBuild.currentResult}",
+                body: "搬移IOS遊戲資源結果: ${currentBuild.currentResult}，位置在(192.168.123.123): SouthPark\\ClientCocos\\prject.ios_mac\\release\\tmp\\",
+                to: "${params.BUILDER_NAME}@igs.com.tw"
+            )
+        }
+    }
+}
+
+def decompressZipFiles(String directory) {
+    sh """
+        find ${directory} -type f -name "*.zip" | while read zipFile; do
+            unzip -o "\$zipFile" -d "\$(dirname "\$zipFile")"
+            echo "Decompressed: \$zipFile"
+        done
+    """
+}
+
+def removeZipFiles(String directory) {
+    sh """
+        find ${directory} -type f -name '*.zip' -exec rm -f {} \\;
+    """
+}

@@ -1,0 +1,177 @@
+pipeline {
+    agent any
+
+    parameters {
+        string(name: 'BUILDER_NAME', defaultValue: 'weitsunglin', description: '你的名字')
+        choice(name: 'BUILD_TYPE', choices: [ 'apk','aab'], description: '編譯類型:上架商店/上架官網')
+        choice(name: 'NDK_TYPE', choices: ['store', 'offical'], description: '底層類型:商店版/官網版')
+        choice(name: 'BUILD_ENV', choices: ['production', 'testing'], description: '編譯環境:外部/二測')
+        string(name: 'VERSION_NAME', defaultValue: '1.1.xxx', description: '版本號:安卓單數1.1.175/IOS雙數1.1.184')
+        string(name: 'VERSION_CODE', defaultValue: '1000249', description: 'versionCode上傳過PLAYSTORE商店重編要再加一')
+    }
+
+    environment {
+        ANDROID_HOME = "/Users/tmd/Library/Android/sdk"
+        ANDROID_STUDIO_PATH = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android-studio"
+        PROJ_ANDROID_PATH = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android"
+        INANNALUA_ENV_PATH = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/assets/InannaLua/WebEnvironment.xml"
+        BUILD_MODE = 'release'
+    }
+
+    stages {
+        stage('Parameter Check') {
+            steps {
+                script {
+                    if (params.VERSION_NAME == '1.1.xxx') {
+                        error("The VERSION_NAME parameter is set to '1.1.xxx', which is a placeholder and not a valid version name. Pipeline execution is terminated to prevent build configuration errors.")
+                    }
+                }
+            }
+        }
+
+        stage('Setting NDK_TYPE') {
+            steps {
+                script {
+                    dir(PROJ_ANDROID_PATH) {
+                        def objDir = params.NDK_TYPE == 'store' ? 'obj_store' : 'obj_offical'
+                        def libsDir = params.NDK_TYPE == 'store' ? 'libs_store' : 'libs_offical'
+
+                        if (fileExists('obj')) {
+                            sh "rm -rf obj"
+                        }
+                        if (fileExists('libs')) {
+                            sh "rm -rf libs"
+                        }
+                        
+                        if (fileExists("${PROJ_ANDROID_PATH}/ndk_temps/${objDir}")) {
+                            sh "cp -r ${PROJ_ANDROID_PATH}/ndk_temps/${objDir} ${PROJ_ANDROID_PATH}/obj"
+                        } else {
+                            echo "${objDir} does not exist, skipping copy."
+                        }
+
+                        if (fileExists("${PROJ_ANDROID_PATH}/ndk_temps/${libsDir}")) {
+                            sh "cp -r ${PROJ_ANDROID_PATH}/ndk_temps/${libsDir} ${PROJ_ANDROID_PATH}/libs"
+                        } else {
+                            echo "${libsDir} does not exist, skipping copy."
+                        }
+                    }
+                    echo "NDK_TYPE is set to ${params.NDK_TYPE}. obj and libs have been copied and renamed accordingly."
+                }
+            }
+        }
+
+
+        stage('Setting project') {
+            steps {
+                script {
+                    dir(PROJ_ANDROID_PATH) {
+                        echo "Setting project"
+
+                        def gradleFilePath = "${PROJ_ANDROID_PATH}/build.gradle"
+                        
+                        // read Gradle 文件内容
+                        def gradleFile = new File(gradleFilePath)
+                        def gradleContent = gradleFile.text
+
+                        // 替换 versionName 和 versionCode
+                        gradleContent = gradleContent.replaceAll(/versionName\s+".*"/, 'versionName "' + VERSION_NAME + '"')
+                        gradleContent = gradleContent.replaceAll(/versionCode\s+\d+/, 'versionCode ' + VERSION_CODE)
+
+                        gradleFile.write(gradleContent)
+                        
+                        echo "Set versionName to ${VERSION_NAME} and versionCode to ${VERSION_CODE}"
+                    }
+                }
+            }
+        }
+
+        stage('Setting environment') {
+            steps {
+                script {
+                    def filePath = INANNALUA_ENV_PATH
+                    def fileContent = readFile(filePath)
+                    def newContent = fileContent.replaceAll(/(<type>).*?(<\/type>)/, "\$1${params.BUILD_ENV}\$2")
+                    writeFile(file: filePath, text: newContent)
+
+                    echo "Updated WebEnvironment.xml to ${params.BUILD_ENV} environment."
+                }
+            }
+        }
+
+        stage('android studio build') {
+            steps {
+                script {
+                    dir(ANDROID_STUDIO_PATH) {
+                        try {
+                            def buildCommand = ""
+                            if (params.BUILD_TYPE == 'aab') {
+                                buildCommand = "bundle${BUILD_MODE.capitalize()}"
+                            } else {
+                                buildCommand = "assemble${BUILD_MODE.capitalize()}"
+                            }
+
+                            sh "chmod +x /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/assets/"
+
+                            sh """
+                            export PATH=\$PATH:\$ANDROID_HOME/tools:\$ANDROID_HOME/platform-tools
+                            chmod +x ./gradlew
+                            ./gradlew clean ${buildCommand} -Dorg.gradle.jvmargs=-Xmx2048m
+                            """
+                        } 
+                        catch (Exception e) {
+                            echo "android studio build  error: ${e}"
+                            throw e
+                        }
+                    }
+                }
+            }
+        }
+        
+        stage('Change app Name and Throw to desktop') {
+            steps {
+                script {
+                    // Define source and destination paths
+                    def apkSource = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/build/outputs/apk/release/proj.android-release.apk"
+                    def destDir = "/Users/tmd/Desktop/testing_app_will_go_gcp"
+                    def apkName = "android-release-${params.NDK_TYPE}.apk"
+
+                    def finalName = "${params.BUILD_ENV}.${apkName}"
+
+                    if (params.NDK_TYPE == 'store') {
+                        finalName = 'androidApk.apk'
+                    } else {
+                        finalName = 'androidAllApk.apk'
+                    }
+
+                    // Ensure the destination directory exists
+                    sh "mkdir -p '${destDir}'"
+                    
+                    // Copy and rename APK
+                    sh """
+                    cp '${apkSource}' '${destDir}/${apkName}'
+                    mv '${destDir}/${apkName}' '${destDir}/${finalName}'
+                    """
+
+                    echo "APK has been copied and renamed to: ${destDir}/${finalName}"
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            emailext(
+                subject: "androdi studio 編譯成功，環境為 ${params.BUILD_ENV}，類型為 ${params.BUILD_TYPE}",
+                body: "編譯成功，路徑在:/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/build/outputs",
+                to: "${params.BUILDER_NAME}@igs.com.tw"
+            )
+        }
+        failure {
+            emailext(
+                subject: "androdi studio 編譯失敗，怎辦，環境為 ${params.BUILD_ENV}，類型為 ${params.BUILD_TYPE}",
+                body: "編譯失敗",
+                to:  "${params.BUILDER_NAME}@igs.com.tw"
+            )
+        }
+    }
+}
