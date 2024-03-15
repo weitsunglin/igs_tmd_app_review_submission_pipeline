@@ -6,7 +6,7 @@ pipeline {
         choice(name: 'BUILD_TYPE', choices: [ 'apk'], description: '編譯類型:上傳GCP')
         choice(name: 'NDK_TYPE', choices: ['store', 'offical'], description: '底層類型:商店版/官網版')
         choice(name: 'BUILD_ENV', choices: ['testing'], description: '編譯環境:二測')
-        string(name: 'VERSION_NAME', defaultValue: '1.1.xxx', description: '版本號:安卓單數1.1.175/IOS雙數1.1.184')
+        string(name: 'VERSION_NAME', defaultValue: '1.1.xxx', description: '版本號:安卓單數1.1.175')
         string(name: 'VERSION_CODE', defaultValue: '1000249', description: 'versionCode上傳過PLAYSTORE商店重編要再加一')
     }
 
