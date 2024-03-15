@@ -4,7 +4,7 @@ pipeline {
     parameters {
         string(name: 'BUILDER_NAME', defaultValue: 'weitsunglin', description: '你的名字')
         string(name: 'NEW_IOS_VERSION', defaultValue: '1.1.xxx', description: '版本號:安卓單數1.1.175/IOS雙數1.1.184')
-        choice(name: 'DB_ENVIORNMENT', choices: [ '二測','外部'], description: '選擇DB環境')
+        choice(name: 'DB_ENVIORNMENT', choices: [ '外部','二測'], description: '選擇DB環境')
     }
 
      environment {
