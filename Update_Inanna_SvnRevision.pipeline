@@ -7,7 +7,7 @@ pipeline {
         choice(name: 'DB_ENVIORNMENT', choices: [ '外部','二測'], description: '選擇DB環境')
     }
 
-     environment {
+    environment {
         MSSQL_SERVER = 'db-gt-test24.gametower.com.tw'  //db-gt-test24.gametower.com.tw、10.100.20.17
         MSSQL_DATABASE = 'GameTower2_TMD'
         TMD_DB = 'tmd_db'
@@ -29,21 +29,21 @@ pipeline {
         stage('DB Modify') {
             steps {
                 script {
-                    if (params.DB_ENVIORNMENT == '外部') {
-                       MSSQL_SERVER = '10.100.20.17'
-                    } 
-                    else {
-                       MSSQL_SERVER = 'db-gt-test24.gametower.com.tw'
-                    }
-                    
-                    //版本號
-                    NEWIOSVERSION = params.NEW_IOS_VERSION
+                    try {
+                        if (params.DB_ENVIORNMENT == '外部') {
+                        MSSQL_SERVER = '10.100.20.17'
+                        } 
+                        else {
+                        MSSQL_SERVER = 'db-gt-test24.gametower.com.tw'
+                        }
+                        
+                        //版本號
+                        NEWIOSVERSION = params.NEW_IOS_VERSION
 
-                    withCredentials([usernamePassword(credentialsId: REMOTE_CREDENTIALS, passwordVariable: 'REMOTE_PASSWORD', usernameVariable: 'REMOTE_USER')]) {
-                        def remote = getRemoteConfig("192.168.44.63", REMOTE_USER, REMOTE_PASSWORD)
-                        //DB
-                        withCredentials([usernamePassword(credentialsId: TMD_DB, usernameVariable: 'DB_ACCOUNT', passwordVariable: 'DB_PASSWORD')]) {
-                            try {
+                        withCredentials([usernamePassword(credentialsId: REMOTE_CREDENTIALS, passwordVariable: 'REMOTE_PASSWORD', usernameVariable: 'REMOTE_USER')]) {
+                            def remote = getRemoteConfig("192.168.44.63", REMOTE_USER, REMOTE_PASSWORD)
+                            //DB
+                            withCredentials([usernamePassword(credentialsId: TMD_DB, usernameVariable: 'DB_ACCOUNT', passwordVariable: 'DB_PASSWORD')]) {
                                 //revision + 1
                                 def fix_dbCommand = "sqlcmd -S ${MSSQL_SERVER} -d ${MSSQL_DATABASE} -U ${DB_ACCOUNT} -P ${DB_PASSWORD} -Q \"UPDATE Client_LatestSvnRevision SET revision = revision - 1 WHERE deviceVersion = '${NEWIOSVERSION}'\""
                                 sshCommand remote: remote, command: fix_dbCommand
@@ -51,11 +51,11 @@ pipeline {
                                 //確認revision號碼
                                 def confirm_dbCommand = "sqlcmd -S ${MSSQL_SERVER} -d ${MSSQL_DATABASE} -U ${DB_ACCOUNT} -P ${DB_PASSWORD} -Q \"SELECT TOP 999 * FROM Client_LatestSvnRevision WHERE deviceVersion = '${NEWIOSVERSION}'\""
                                 sshCommand remote: remote, command: confirm_dbCommand
-                            } catch (Exception e) {
-                                echo "Caught an exception: ${e.getMessage()}"
-                                throw e
                             }
                         }
+                    } catch (Exception e) {
+                        echo "DB Modify with error: ${e.message}"
+                        throw e
                     }
                 }
             }

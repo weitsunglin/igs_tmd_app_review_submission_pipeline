@@ -27,27 +27,33 @@ pipeline {
         stage('SVN Switching Resources') {
             steps {
                 script {
-                    def InanaUrl = "http://192.168.1.183/svn/Inanna/branches/ReleaseIOS"
+                    try {
+                        def InanaUrl = "http://192.168.1.183/svn/Inanna/branches/ReleaseIOS"
 
-                    dir("${TMD_RESOURCES_URL}Inanna/") {
-                        withCredentials([usernamePassword(credentialsId: SVM_CREDENTIALS_ID, usernameVariable: 'SVN_USER', passwordVariable: 'SVN_PASSWORD')]) {
-                            sh "${SVN_INSTALL_PATH} switch ${InanaUrl} --username \${SVN_USER} --password \$SVN_PASSWORD"
-                            sh "${SVN_INSTALL_PATH} revert -R . --username \$SVN_USER --password \$SVN_PASSWORD"
-                        }
-                    }
-
-                    resources.each { resource ->
-                        dir("${TMD_RESOURCES_URL}${resource.name}") {
+                        dir("${TMD_RESOURCES_URL}Inanna/") {
                             withCredentials([usernamePassword(credentialsId: SVM_CREDENTIALS_ID, usernameVariable: 'SVN_USER', passwordVariable: 'SVN_PASSWORD')]) {
-                                sh "${SVN_INSTALL_PATH} switch ${resource.url} --username \${SVN_USER} --password \$SVN_PASSWORD"
-                                sh "${SVN_INSTALL_PATH} revert -R . --username \${SVN_USER} --password \$SVN_PASSWORD"
+                                sh "${SVN_INSTALL_PATH} switch ${InanaUrl} --username \${SVN_USER} --password \$SVN_PASSWORD"
+                                sh "${SVN_INSTALL_PATH} revert -R . --username \$SVN_USER --password \$SVN_PASSWORD"
                             }
                         }
+
+                        resources.each { resource ->
+                            dir("${TMD_RESOURCES_URL}${resource.name}") {
+                                withCredentials([usernamePassword(credentialsId: SVM_CREDENTIALS_ID, usernameVariable: 'SVN_USER', passwordVariable: 'SVN_PASSWORD')]) {
+                                    sh "${SVN_INSTALL_PATH} switch ${resource.url} --username \${SVN_USER} --password \$SVN_PASSWORD"
+                                    sh "${SVN_INSTALL_PATH} revert -R . --username \${SVN_USER} --password \$SVN_PASSWORD"
+                                }
+                            }
+                        }
+                    } catch (Exception e) {
+                        echo "SVN Switching Resources with error: ${e.message}"
+                        throw e
                     }
                 }
             }
         }
     }
+
 
     post {
         success {

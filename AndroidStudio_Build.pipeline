@@ -32,71 +32,75 @@ pipeline {
         stage('Setting NDK_TYPE') {
             steps {
                 script {
-                    dir(PROJ_ANDROID_PATH) {
-                        def objDir = params.NDK_TYPE == 'store' ? 'obj_store' : 'obj_offical'
-                        def libsDir = params.NDK_TYPE == 'store' ? 'libs_store' : 'libs_offical'
+                    try {
+                        dir(PROJ_ANDROID_PATH) {
+                            def objDir = params.NDK_TYPE == 'store' ? 'obj_store' : 'obj_offical'
+                            def libsDir = params.NDK_TYPE == 'store' ? 'libs_store' : 'libs_offical'
 
-                        if (fileExists('obj')) {
-                            sh "rm -rf obj"
-                        }
-                        if (fileExists('libs')) {
-                            sh "rm -rf libs"
-                        }
-                        
-                        if (fileExists("${PROJ_ANDROID_PATH}/ndk_temps/${objDir}")) {
-                            sh "cp -r ${PROJ_ANDROID_PATH}/ndk_temps/${objDir} ${PROJ_ANDROID_PATH}/obj"
-                        } else {
-                            echo "${objDir} does not exist, skipping copy."
-                        }
+                            if (fileExists('obj')) {
+                                sh "rm -rf obj"
+                            }
+                            if (fileExists('libs')) {
+                                sh "rm -rf libs"
+                            }
+                            
+                            if (fileExists("${PROJ_ANDROID_PATH}/ndk_temps/${objDir}")) {
+                                sh "cp -r ${PROJ_ANDROID_PATH}/ndk_temps/${objDir} ${PROJ_ANDROID_PATH}/obj"
+                            } else {
+                                echo "${objDir} does not exist, skipping copy."
+                            }
 
-                        if (fileExists("${PROJ_ANDROID_PATH}/ndk_temps/${libsDir}")) {
-                            sh "cp -r ${PROJ_ANDROID_PATH}/ndk_temps/${libsDir} ${PROJ_ANDROID_PATH}/libs"
-                        } else {
-                            echo "${libsDir} does not exist, skipping copy."
+                            if (fileExists("${PROJ_ANDROID_PATH}/ndk_temps/${libsDir}")) {
+                                sh "cp -r ${PROJ_ANDROID_PATH}/ndk_temps/${libsDir} ${PROJ_ANDROID_PATH}/libs"
+                            } else {
+                                echo "${libsDir} does not exist, skipping copy."
+                            }
                         }
+                    } catch (Exception e) {
+                        echo "Failed in Setting NDK_TYPE: ${e.getMessage()}"
                     }
-                    echo "NDK_TYPE is set to ${params.NDK_TYPE}. obj and libs have been copied and renamed accordingly."
                 }
             }
         }
+
 
 
         stage('Setting project') {
             steps {
                 script {
-                    dir(PROJ_ANDROID_PATH) {
-                        echo "Setting project"
-
-                        def gradleFilePath = "${PROJ_ANDROID_PATH}/build.gradle"
-                        
-                        // read Gradle 文件内容
-                        def gradleFile = new File(gradleFilePath)
-                        def gradleContent = gradleFile.text
-
-                        // 替换 versionName 和 versionCode
-                        gradleContent = gradleContent.replaceAll(/versionName\s+".*"/, 'versionName "' + VERSION_NAME + '"')
-                        gradleContent = gradleContent.replaceAll(/versionCode\s+\d+/, 'versionCode ' + VERSION_CODE)
-
-                        gradleFile.write(gradleContent)
-                        
-                        echo "Set versionName to ${VERSION_NAME} and versionCode to ${VERSION_CODE}"
+                    try {
+                        dir(PROJ_ANDROID_PATH) {
+                            def gradleFilePath = "${PROJ_ANDROID_PATH}/build.gradle"
+                            
+                            // Assuming the read and write operations could throw an IOException
+                            def gradleContent = readFile(gradleFilePath)
+                            gradleContent = gradleContent.replaceAll(/versionName\s+".*"/, 'versionName "' + VERSION_NAME + '"')
+                                                        .replaceAll(/versionCode\s+\d+/, 'versionCode ' + VERSION_CODE)
+                            writeFile(file: gradleFilePath, text: gradleContent)
+                        }
+                    } catch (Exception e) {
+                        echo "Failed in Setting project: ${e.getMessage()}"
                     }
                 }
             }
         }
 
+
         stage('Setting environment') {
             steps {
                 script {
-                    def filePath = INANNALUA_ENV_PATH
-                    def fileContent = readFile(filePath)
-                    def newContent = fileContent.replaceAll(/(<type>).*?(<\/type>)/, "\$1${params.BUILD_ENV}\$2")
-                    writeFile(file: filePath, text: newContent)
-
-                    echo "Updated WebEnvironment.xml to ${params.BUILD_ENV} environment."
+                    try {
+                        def filePath = INANNALUA_ENV_PATH
+                        def fileContent = readFile(filePath)
+                        def newContent = fileContent.replaceAll(/(<type>).*?(<\/type>)/, "\$1${params.BUILD_ENV}\$2")
+                        writeFile(file: filePath, text: newContent)
+                    } catch (Exception e) {
+                        echo "Failed in Setting environment: ${e.getMessage()}"
+                    }
                 }
             }
         }
+
 
         stage('android studio build') {
             steps {
@@ -130,29 +134,27 @@ pipeline {
         stage('Change app Name and Throw to desktop') {
             steps {
                 script {
-                    // Define source and destination paths
-                    def apkSource = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/build/outputs/apk/release/proj.android-release.apk"
-                    def destDir = "/Users/tmd/Desktop/testing_app_will_go_gcp"
-                    def apkName = "android-release-${params.NDK_TYPE}.apk"
+                    try {
+                        def apkSource = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/build/outputs/apk/release/proj.android-release.apk"
+                        def destDir = "/Users/tmd/Desktop/testing_app_will_go_gcp"
+                        def apkName = "android-release-${params.NDK_TYPE}.apk"
+                        def finalName = "${params.BUILD_ENV}.${apkName}"
 
-                    def finalName = "${params.BUILD_ENV}.${apkName}"
+                        if (params.NDK_TYPE == 'store') {
+                            finalName = 'androidApk.apk'
+                        } else {
+                            finalName = 'androidAllApk.apk'
+                        }
 
-                    if (params.NDK_TYPE == 'store') {
-                        finalName = 'androidApk.apk'
-                    } else {
-                        finalName = 'androidAllApk.apk'
+                        sh "mkdir -p '${destDir}'"
+                        
+                        sh """
+                        cp '${apkSource}' '${destDir}/${apkName}'
+                        mv '${destDir}/${apkName}' '${destDir}/${finalName}'
+                        """
+                    } catch (Exception e) {
+                        echo "Failed in Change app Name and Throw to desktop: ${e.getMessage()}"
                     }
-
-                    // Ensure the destination directory exists
-                    sh "mkdir -p '${destDir}'"
-                    
-                    // Copy and rename APK
-                    sh """
-                    cp '${apkSource}' '${destDir}/${apkName}'
-                    mv '${destDir}/${apkName}' '${destDir}/${finalName}'
-                    """
-
-                    echo "APK has been copied and renamed to: ${destDir}/${finalName}"
                 }
             }
         }

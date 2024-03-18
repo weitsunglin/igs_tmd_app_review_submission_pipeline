@@ -30,43 +30,42 @@ pipeline {
         stage('Caculate per version') {
             steps {
                 script { 
-                    //DB環境
-                    if (params.DB_ENVIORNMENT == '外部') {
-                       MSSQL_SERVER = '10.100.20.17'
-                    } 
-                    else {
-                       MSSQL_SERVER = 'db-gt-test24.gametower.com.tw'
+                    try {
+                        if (params.DB_ENVIORNMENT == '外部') {
+                            MSSQL_SERVER = '10.100.20.17'
+                        } else {
+                            MSSQL_SERVER = 'db-gt-test24.gametower.com.tw'
+                        }
+
+                        NEWIOSVERSION = params.NEW_IOS_VERSION  
+
+                        def versionParts = NEWIOSVERSION.tokenize('.')
+                        def major = versionParts[0] as int
+                        def minor = versionParts[1] as int
+                        def patch = (versionParts[2] as int) - 2
+                        PRE_VERSION = "${major}.${minor}.${patch}"
+                    } catch (Exception e) {
+                        echo "Error in 'Caculate per version' stage: ${e.getMessage()}"
                     }
-
-                    //IOS新版本
-                    NEWIOSVERSION = params.NEW_IOS_VERSION  
-
-                    // 版本號回推處理，因為要從舊revision call一份，變成新的
-                    def versionParts = NEWIOSVERSION.tokenize('.')
-                    def major = versionParts[0] as int
-                    def minor = versionParts[1] as int
-                    def patch = (versionParts[2] as int) - 2
-                    PRE_VERSION = "${major}.${minor}.${patch}"
                 }
             }
         }
+
         
         stage('Insert DB LatestSvnRevision') {
             steps {
                 script {
-                    //REMOTE
                     withCredentials([usernamePassword(credentialsId: REMOTE_CREDENTIALS, passwordVariable: 'REMOTE_PASSWORD', usernameVariable: 'REMOTE_USER')]) {
                         def remote = getRemoteConfig("192.168.44.63", REMOTE_USER, REMOTE_PASSWORD)
-                        //DB
                         withCredentials([usernamePassword(credentialsId: TMD_DB, usernameVariable: 'DB_ACCOUNT', passwordVariable: 'DB_PASSWORD')]) {
                             try {
-                                def insert_dbCommand =  "sqlcmd -S ${MSSQL_SERVER} -d ${MSSQL_DATABASE} -U ${DB_ACCOUNT} -P ${DB_PASSWORD} -Q \"INSERT INTO [GameTower2_TMD].[dbo].[Client_LatestSvnRevision] SELECT '${NEWIOSVERSION}', [path], [revision] FROM [GameTower2_TMD].[dbo].[Client_LatestSvnRevision] where [deviceVersion] = '${PRE_VERSION}'\""
+                                def insert_dbCommand = "sqlcmd -S ${MSSQL_SERVER} -d ${MSSQL_DATABASE} -U ${DB_ACCOUNT} -P ${DB_PASSWORD} -Q \"INSERT INTO [GameTower2_TMD].[dbo].[Client_LatestSvnRevision] SELECT '${NEWIOSVERSION}', [path], [revision] FROM [GameTower2_TMD].[dbo].[Client_LatestSvnRevision] where [deviceVersion] = '${PRE_VERSION}'\""
                                 sshCommand remote: remote, command: insert_dbCommand
 
                                 def confirm_dbCommand = "sqlcmd -S ${MSSQL_SERVER} -d ${MSSQL_DATABASE} -U ${DB_ACCOUNT} -P ${DB_PASSWORD} -Q \"SELECT TOP 999 * FROM Client_LatestSvnRevision WHERE [deviceVersion] = '${NEWIOSVERSION}'\""
                                 sshCommand remote: remote, command: confirm_dbCommand
                             } catch (Exception e) {
-                                echo "Caught an exception: ${e.getMessage()}"
+                                echo "Caught an exception in 'Insert DB LatestSvnRevision' stage: ${e.getMessage()}"
                                 throw e
                             }
                         }
@@ -74,6 +73,7 @@ pipeline {
                 }
             }
         }
+
     }
     
     post {

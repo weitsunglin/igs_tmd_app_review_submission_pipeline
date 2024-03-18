@@ -12,81 +12,101 @@ pipeline {
     }
 
     stages {
+
         stage('Create Folder and Throw IOS IPA') {
             steps {
                 script {
-                    VERSION_NAME_SHELL = "${params.VERSION_NAME}"
+                    try {
+                        VERSION_NAME_SHELL = "${params.VERSION_NAME}"
 
-                    sh """
-                    SOURCE_FILE="/Users/tmd/Desktop/testing_app_will_go_gcp/iosipa.ipa"
-                    TARGET_DIR="/Volumes/webGame/tmdInstall/testing/${VERSION_NAME_SHELL}"
+                        sh """
+                        SOURCE_FILE="/Users/tmd/Desktop/testing_app_will_go_gcp/iosipa.ipa"
+                        TARGET_DIR="/Volumes/webGame/tmdInstall/testing/${VERSION_NAME_SHELL}"
 
-                    # Ensure the target directory exists
-                    mkdir -p "\${TARGET_DIR}"
+                        # Ensure the target directory exists
+                        mkdir -p "\${TARGET_DIR}"
 
-                    # Copy the file
-                    cp "\${SOURCE_FILE}" "\${TARGET_DIR}"
-                    """
+                        # Copy the file
+                        cp "\${SOURCE_FILE}" "\${TARGET_DIR}"
+                        """
+                    } catch (Exception e) {
+                        echo "Create Folder and Throw IOS IPA with error: ${e.message}"
+                        throw e
+                    }
                 }
             }
         }
+
 
         
         stage('Create Manifest') {
             steps {
                 script {
-                def manifestDir = "/Volumes/webGame/tmdInstall/testing/${VERSION_NAME_SHELL}"
-                def manifestFile = "${manifestDir}/manifest.plist"
+                    try {
+                        def VERSION_NAME_SHELL = "${params.VERSION_NAME}"
 
-                def manifestContent = """<?xml version="1.0" encoding="UTF-8"?>
-                <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-                <plist version="1.0">
-                <dict>
-                    <key>items</key>
-                    <array>
+                        def manifestDir = "/Volumes/webGame/tmdInstall/testing/${VERSION_NAME_SHELL}"
+                        def manifestFile = "${manifestDir}/manifest.plist"
+
+                        def manifestContent = """<?xml version="1.0" encoding="UTF-8"?>
+                        <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+                        <plist version="1.0">
                         <dict>
-                            <key>assets</key>
+                            <key>items</key>
                             <array>
                                 <dict>
-                                    <key>kind</key>
-                                    <string>software-package</string>
-                                    <key>url</key>
-                                    <string>https://cdn-g.gametower.com.tw/rd5/tmdInstall/testing/${VERSION_NAME_SHELL}/iosipa.ipa</string>
+                                    <key>assets</key>
+                                    <array>
+                                        <dict>
+                                            <key>kind</key>
+                                            <string>software-package</string>
+                                            <key>url</key>
+                                            <string>https://cdn-g.gametower.com.tw/rd5/tmdInstall/testing/${VERSION_NAME_SHELL}/iosipa.ipa</string>
+                                        </dict>
+                                    </array>
+                                    <key>metadata</key>
+                                    <dict>
+                                        <key>bundle-identifier</key>
+                                        <string>com.igs.TMD</string>
+                                        <key>bundle-version</key>
+                                        <string>${VERSION_NAME_SHELL}</string>
+                                        <key>kind</key>
+                                        <string>software</string>
+                                        <key>title</key>
+                                        <string>${VERSION_NAME_SHELL}</string>
+                                    </dict>
                                 </dict>
                             </array>
-                            <key>metadata</key>
-                            <dict>
-                                <key>bundle-identifier</key>
-                                <string>com.igs.TMD</string>
-                                <key>bundle-version</key>
-                                <string>${VERSION_NAME_SHELL}</string>
-                                <key>kind</key>
-                                <string>software</string>
-                                <key>title</key>
-                                <string>${VERSION_NAME_SHELL}</string>
-                            </dict>
                         </dict>
-                    </array>
-                </dict>
-                </plist>"""
+                        </plist>"""
 
-                // Ensure the directory exists
-                sh "mkdir -p ${manifestDir}"
-                
-                // Write the content to the manifest file
-                writeFile file: manifestFile, text: manifestContent
+                        // Ensure the directory exists
+                        sh "mkdir -p ${manifestDir}"
+                        
+                        // Write the content to the manifest file
+                        writeFile file: manifestFile, text: manifestContent
+                    } catch (Exception e) {
+                        echo "Create Manifest with error: ${e.message}"
+                        throw e
+                    }
                 }
             }
         }
+
  
 
         stage('Execute Batch File') {
             steps {
                 script {
-                    withCredentials([usernamePassword(credentialsId: REMOTE_CREDENTIALS, passwordVariable: 'PASSWORD', usernameVariable: 'USER')]) {
-                        def remote = getRemoteConfig('192.168.44.102', USER, PASSWORD)
-                        def command = "D:/webGame/tmdInstall/IPA_GCP_rsyncAndPurge_jenkins.bat"
-                        sshCommand remote: remote, command: command
+                    try {
+                        withCredentials([usernamePassword(credentialsId: REMOTE_CREDENTIALS, passwordVariable: 'PASSWORD', usernameVariable: 'USER')]) {
+                            def remote = getRemoteConfig('192.168.44.102', USER, PASSWORD)
+                            def command = "D:/webGame/tmdInstall/IPA_GCP_rsyncAndPurge_jenkins.bat"
+                            sshCommand remote: remote, command: command
+                        }
+                    } catch (Exception e) {
+                        echo "Execute Batch File with error: ${e.message}"
+                        throw e
                     }
                 }
             }

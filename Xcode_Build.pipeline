@@ -31,16 +31,21 @@ pipeline {
         stage('ExportOption Setting') {
             steps {
                 script {
-                    if (params.BUILD_TYPE == '外部') {
-                        BUILD_TARGET = 'SouthPark release'
-                        EXPORT_OPTION = "ExportOption_Release.plist"
-                        SOUTH_PARK_INFO = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/ios/SouthPark release-Info.plist"
-                    } else if(params.BUILD_TYPE == '二測') {
-                        BUILD_TARGET = 'SouthPark debug package'
-                        EXPORT_OPTION = "ExportOption_Test.plist"
-                        SOUTH_PARK_INFO = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/ios/SouthPark debug package-Info.plist"
+                    try {
+                        if (params.BUILD_TYPE == '外部') {
+                            BUILD_TARGET = 'SouthPark release'
+                            EXPORT_OPTION = "ExportOption_Release.plist"
+                            SOUTH_PARK_INFO = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/ios/SouthPark release-Info.plist"
+                        } else if(params.BUILD_TYPE == '二測') {
+                            BUILD_TARGET = 'SouthPark debug package'
+                            EXPORT_OPTION = "ExportOption_Test.plist"
+                            SOUTH_PARK_INFO = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/ios/SouthPark debug package-Info.plist"
+                        }
+                        echo "BUILD_TARGET: ${BUILD_TARGET}"
+                    } catch (Exception e) {
+                        echo "ExportOption Setting failed with error: ${e.message}"
+                        throw e
                     }
-                    echo "BUILD_TARGET: ${BUILD_TARGET}"
                 }
             }
         }
@@ -69,6 +74,7 @@ pipeline {
                 }
             }
         }
+
 
         stage('Version and Build Number Setting') {
             steps {
@@ -108,9 +114,8 @@ pipeline {
                         def fileContent = readFile(filePath)
                         def newContent = fileContent.replaceAll(/(<type>).*?(<\/type>)/, "\$1${Env}\$2")
                         writeFile(file: filePath, text: newContent)
-
                     } catch (Exception e) {
-                        println("An error occurred: ${e.message}")
+                        println("Setting WebEnvironment error occurred: ${e.message}")
                     }
                 }
             }
