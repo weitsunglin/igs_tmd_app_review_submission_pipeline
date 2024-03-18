@@ -36,7 +36,6 @@ pipeline {
                 script {
                     withCredentials([usernamePassword(credentialsId: REMOTE_CREDENTIALS, passwordVariable: 'PASSWORD', usernameVariable: 'USER')]) {
                         try {
-                            echo "Deploying to CDN..."
                             def remote = getRemoteConfig('192.168.44.102', USER, PASSWORD)
                             def command = "C:/Users/Administrator/Desktop/TMD_Client/送審專用/jenkins_update_cdn_gcp/jenkins_cdn_change_webEnvoroment.bat"
                             sshCommand remote: remote, command: command
@@ -54,7 +53,6 @@ pipeline {
                 script {
                     withCredentials([usernamePassword(credentialsId: REMOTE_CREDENTIALS, passwordVariable: 'PASSWORD', usernameVariable: 'USER')]) {
                         try {
-                            echo "Deploying to GCP..."
                             def remote = getRemoteConfig('192.168.44.102', USER, PASSWORD)
                             def command = "C:/Users/Administrator/Desktop/TMD_Client/送審專用/jenkins_update_cdn_gcp/jenkins_gcp_change_webEnvoroment.bat"
                             sshCommand remote: remote, command: command

@@ -18,7 +18,6 @@ pipeline {
     }
     
     stages {
-
         stage('Parameter Check') {
             steps {
                 script {
@@ -28,7 +27,6 @@ pipeline {
                 }
             }
         }
-
 
         stage('ExportOption Setting') {
             steps {
@@ -121,7 +119,6 @@ pipeline {
         stage('Xcode Setting Mobile Provisioning') {
             steps {
                 script {
-                    echo 'Xcode Setting Mobile Provisioning'
                     try {
                         if (params.BUILD_TYPE == '外部') {
                             sh "cp /Users/tmd/Desktop/homebrew_jenkins_backup_data/PushService_AppStore_2023.mobileprovision ~/Library/MobileDevice/Provisioning\\ Profiles/"
@@ -160,7 +157,6 @@ pipeline {
                 script {
                     dir(PROJECT_WORKSPACE_PATH) {
                         try {
-                            echo "Xcode Archive"
                             sh "xcodebuild -workspace SouthPark.xcworkspace -scheme '${BUILD_TARGET}' -sdk iphoneos -configuration ${BUILD_CONFIG} archive -archivePath ./build/SouthPark.xcarchive && xcodebuild -exportArchive -archivePath ./build/SouthPark.xcarchive -exportOptionsPlist ${EXPORT_OPTION} -exportPath ./build"
                         } catch (Exception e) {
                             echo "Xcode Archive failed with error: ${e.message}"

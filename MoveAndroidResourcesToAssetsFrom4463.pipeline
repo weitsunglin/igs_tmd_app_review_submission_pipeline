@@ -84,14 +84,10 @@ pipeline {
                     sh "rm -rf /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/assets/InannaLua*"
                     sh "rm -rf /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/assets/InannaResource*"
 
-                    // 定義源資料夾
                     def luaSource = '/Volumes/TMD_PUBLIC/TMD/testing/android/Inanna/InannaLua'
                     def resourcesSource = '/Volumes/TMD_PUBLIC/TMD/testing/android/Inanna/InannaResource'
-
-                    // 定義目標目錄
                     def targetDirectory = '/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/assets/'
 
-                    // 搬移 InannaLua 和 InannaResource 資料夾到目標目錄
                     sh "cp -R ${luaSource} ${targetDirectory}"
                     sh "cp -R ${resourcesSource} ${targetDirectory}"
                 }
@@ -119,13 +115,8 @@ pipeline {
         stage('Clean Up') {
             steps {
                 script {
-                    // 定義目標目錄
                     def targetDirectory = '/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/assets/'
-                    
-                    // 删除 .zip 文件
-                    sh """
-                    find ${targetDirectory} -type f -name '*.zip' -exec rm {} \\;
-                    """
+                    sh """  find ${targetDirectory} -type f -name '*.zip' -exec rm {} \\;  """
                 }
             }
         }
@@ -149,7 +140,6 @@ pipeline {
                 }
             }
         }
-
     }
 
     post {

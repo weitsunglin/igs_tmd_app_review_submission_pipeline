@@ -11,9 +11,7 @@ pipeline {
         REMOTE_CREDENTIALS = 'remote44102_login'
     }
 
-
     stages {
-
         stage('Create Folder and Throw IOS IPA') {
             steps {
                 script {
@@ -37,11 +35,9 @@ pipeline {
         stage('Create Manifest') {
             steps {
                 script {
-                // Define the directory where the manifest file will be created
                 def manifestDir = "/Volumes/webGame/tmdInstall/testing/${VERSION_NAME_SHELL}"
                 def manifestFile = "${manifestDir}/manifest.plist"
 
-                // XML content for the manifest, with placeholders for VERSION_NAME
                 def manifestContent = """<?xml version="1.0" encoding="UTF-8"?>
                 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
                 <plist version="1.0">
@@ -79,8 +75,6 @@ pipeline {
                 
                 // Write the content to the manifest file
                 writeFile file: manifestFile, text: manifestContent
-
-                echo "Manifest file created at ${manifestFile}"
                 }
             }
         }
@@ -89,7 +83,6 @@ pipeline {
         stage('Execute Batch File') {
             steps {
                 script {
-                    echo "Execute Batch File"
                     withCredentials([usernamePassword(credentialsId: REMOTE_CREDENTIALS, passwordVariable: 'PASSWORD', usernameVariable: 'USER')]) {
                         def remote = getRemoteConfig('192.168.44.102', USER, PASSWORD)
                         def command = "D:/webGame/tmdInstall/IPA_GCP_rsyncAndPurge_jenkins.bat"

@@ -12,7 +12,6 @@ pipeline {
     }
 
     stages {
-
         stage('Create Folder and Throw IOS IPA') {
             steps {
                 script {
@@ -38,7 +37,6 @@ pipeline {
         stage('Execute Batch File') {
             steps {
                 script {
-                    echo "Execute Batch File"
                     withCredentials([usernamePassword(credentialsId: REMOTE_CREDENTIALS, passwordVariable: 'PASSWORD', usernameVariable: 'USER')]) {
                         def remote = getRemoteConfig('192.168.44.102', USER, PASSWORD)
                         def command = "D:/webGame/tmdInstall/IPA_GCP_rsyncAndPurge_jenkins.bat"

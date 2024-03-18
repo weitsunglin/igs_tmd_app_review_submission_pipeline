@@ -18,7 +18,6 @@ pipeline {
     }
     
     stages {
-
         stage('Parameter Check') {
             steps {
                 script {
@@ -28,7 +27,6 @@ pipeline {
                 }
             }
         }
-
 
         stage('ExportOption Setting') {
             steps {
@@ -42,7 +40,6 @@ pipeline {
                         EXPORT_OPTION = "ExportOption_Test.plist"
                         SOUTH_PARK_INFO = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/ios/SouthPark debug package-Info.plist"
                     }
-                    echo "BUILD_TARGET: ${BUILD_TARGET}"
                 }
             }
         }
@@ -55,7 +52,6 @@ pipeline {
                             sh '''
                             if [ -d "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/build" ]; then
                                 chmod +x /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/build
-                                echo "Directory permissions changed."
                             else
                                 echo "Directory does not exist."
                             fi

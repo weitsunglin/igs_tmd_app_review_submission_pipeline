@@ -13,8 +13,6 @@ pipeline {
         stage('複製外部遊戲資源到送審遊戲資源') {
             steps {
                 script {
-                    echo "Copy production Resources to testing Resources"
-
                     withCredentials([usernamePassword(credentialsId: REMOTE_CREDENTIALS, passwordVariable: 'PASSWORD', usernameVariable: 'USER')]) {
                         try {
                             def remote = getRemoteConfig('192.168.44.102', USER, PASSWORD)
@@ -38,7 +36,6 @@ pipeline {
             steps {
                 script {
                     withCredentials([usernamePassword(credentialsId: REMOTE_CREDENTIALS, passwordVariable: 'PASSWORD', usernameVariable: 'USER')]) {
-                        echo "GCP更新Resource"
                         def remote = getRemoteConfig('192.168.44.102', USER, PASSWORD)
                         def command = "C:/Users/Administrator/Desktop/TMD_Client/送審專用/jenkins_update_cdn_gcp/ios/1_GCP更新Resource.bat"
                         sshCommand remote: remote, command: command
@@ -51,7 +48,6 @@ pipeline {
             steps {
                 script {
                     withCredentials([usernamePassword(credentialsId: REMOTE_CREDENTIALS, passwordVariable: 'PASSWORD', usernameVariable: 'USER')]) {
-                        echo "GCP清除快取資源"
                         def remote = getRemoteConfig('192.168.44.102', USER, PASSWORD)
                         def command = "C:/Users/Administrator/Desktop/TMD_Client/送審專用/jenkins_update_cdn_gcp/ios/2_GCP清除快取資源.bat"
                         sshCommand remote: remote, command: command
@@ -64,7 +60,6 @@ pipeline {
             steps {
                 script {
                     withCredentials([usernamePassword(credentialsId: REMOTE_CREDENTIALS, passwordVariable: 'PASSWORD', usernameVariable: 'USER')]) {
-                        echo "CDN更新Resource"
                         def remote = getRemoteConfig('192.168.44.102', USER, PASSWORD)
                         def command = "C:/Users/Administrator/Desktop/TMD_Client/送審專用/jenkins_update_cdn_gcp/ios/3_CDN更新Resource.bat"
                         sshCommand remote: remote, command: command
@@ -77,7 +72,6 @@ pipeline {
             steps {
                 script {
                     withCredentials([usernamePassword(credentialsId: REMOTE_CREDENTIALS, passwordVariable: 'PASSWORD', usernameVariable: 'USER')]) {
-                        echo "GCP更新Version"
                         def remote = getRemoteConfig('192.168.44.102', USER, PASSWORD)
                         def command = "C:/Users/Administrator/Desktop/TMD_Client/送審專用/jenkins_update_cdn_gcp/ios/5_GCP更新Version.bat"
                         sshCommand remote: remote, command: command
@@ -90,7 +84,6 @@ pipeline {
             steps {
                 script {
                     withCredentials([usernamePassword(credentialsId: REMOTE_CREDENTIALS, passwordVariable: 'PASSWORD', usernameVariable: 'USER')]) {
-                        echo "GCP清除快取資源2"
                         def remote = getRemoteConfig('192.168.44.102', USER, PASSWORD)
                         def command = "C:/Users/Administrator/Desktop/TMD_Client/送審專用/jenkins_update_cdn_gcp/ios/6_GCP清除快取資源.bat"
                         sshCommand remote: remote, command: command
@@ -103,7 +96,6 @@ pipeline {
             steps {
                 script {
                     withCredentials([usernamePassword(credentialsId: REMOTE_CREDENTIALS, passwordVariable: 'PASSWORD', usernameVariable: 'USER')]) {
-                        echo "CDN更新Version2"
                         def remote = getRemoteConfig('192.168.44.102', USER, PASSWORD)
                         def command = "C:/Users/Administrator/Desktop/TMD_Client/送審專用/jenkins_update_cdn_gcp/ios/7_CDN更新Version.bat"
                         sshCommand remote: remote, command: command

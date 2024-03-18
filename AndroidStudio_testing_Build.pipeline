@@ -55,7 +55,6 @@ pipeline {
                             echo "${libsDir} does not exist, skipping copy."
                         }
                     }
-                    echo "NDK_TYPE is set to ${params.NDK_TYPE}. obj and libs have been copied and renamed accordingly."
                 }
             }
         }
@@ -65,11 +64,8 @@ pipeline {
             steps {
                 script {
                     dir(PROJ_ANDROID_PATH) {
-                        echo "Setting project"
-
                         def gradleFilePath = "${PROJ_ANDROID_PATH}/build.gradle"
                         
-                        // read Gradle 文件内容
                         def gradleFile = new File(gradleFilePath)
                         def gradleContent = gradleFile.text
 
@@ -78,8 +74,6 @@ pipeline {
                         gradleContent = gradleContent.replaceAll(/versionCode\s+\d+/, 'versionCode ' + VERSION_CODE)
 
                         gradleFile.write(gradleContent)
-                        
-                        echo "Set versionName to ${VERSION_NAME} and versionCode to ${VERSION_CODE}"
                     }
                 }
             }
@@ -92,8 +86,6 @@ pipeline {
                     def fileContent = readFile(filePath)
                     def newContent = fileContent.replaceAll(/(<type>).*?(<\/type>)/, "\$1${params.BUILD_ENV}\$2")
                     writeFile(file: filePath, text: newContent)
-
-                    echo "Updated WebEnvironment.xml to ${params.BUILD_ENV} environment."
                 }
             }
         }
@@ -151,8 +143,6 @@ pipeline {
                     cp '${apkSource}' '${destDir}/${apkName}'
                     mv '${destDir}/${apkName}' '${destDir}/${finalName}'
                     """
-
-                    echo "APK has been copied and renamed to: ${destDir}/${finalName}"
                 }
             }
         }

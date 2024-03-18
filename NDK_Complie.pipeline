@@ -12,7 +12,6 @@ pipeline {
     }
 
     stages {
-
         stage('Delete Resources') {
             steps {
                 script {
@@ -33,19 +32,15 @@ pipeline {
                         fileContent.each { line ->
                             if (line.contains("LOCAL_CFLAGS += -DOFFICIAL_VERSION")) {
                                 if (params.ANDROID_VERSION == '官方版') {
-                                    // 如果是官方版本且行被註釋，則取消註釋
                                     newContent.add(line.replaceFirst("#", ""))
                                 } else {
-                                    // 如果不是官方版本且行未被註釋，則註釋
                                     if (!line.startsWith("#")) {
                                         newContent.add("#" + line)
                                     } else {
-                                        // 如果已經是註釋狀態，保持不變
                                         newContent.add(line)
                                     }
                                 }
                             } else {
-                                // 對於不符合條件的行，直接添加到新內容中
                                 newContent.add(line)
                             }
                         }
@@ -95,8 +90,6 @@ pipeline {
                 }
             }
         }
-
-
     }
 
     post {

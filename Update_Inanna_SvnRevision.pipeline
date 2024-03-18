@@ -29,7 +29,6 @@ pipeline {
         stage('DB Modify') {
             steps {
                 script {
-                    //DB環境
                     if (params.DB_ENVIORNMENT == '外部') {
                        MSSQL_SERVER = '10.100.20.17'
                     } 
@@ -75,7 +74,6 @@ pipeline {
                     to: "${params.BUILDER_NAME}@igs.com.tw"
                 )
 
-                // LINE通知
                 withCredentials([usernamePassword(credentialsId: "line_notify", usernameVariable: '_', passwordVariable: 'line_token')]) {
                     try {
                         sh """

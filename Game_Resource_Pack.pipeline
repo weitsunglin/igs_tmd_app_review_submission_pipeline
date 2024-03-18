@@ -35,9 +35,6 @@ pipeline {
                            output = sh(script: "python3 read_google_sheet.py ${params.GAME_VERSION} ${params.IOS_RESOURCES}", returnStdout: true).trim()
                            SVN_URLS = output.split('\n')
                         }
-                        
-                        echo "版本路徑撈取: ${output}"
-                       
                     }
                 }
             }
@@ -49,16 +46,11 @@ pipeline {
                     for( url in SVN_URLS ) {
                         def cleanedOutput = url.replaceAll("[\\[\\]' ]", "")
                         def elements = cleanedOutput.split(",")
-
                         def gameName = elements[0]
                         def gameUrl = elements[1]
 
-                        echo "Game Name: ${gameName}"
-                        echo "Game URL: ${gameUrl}"
-
                         dir( TMD_RESOURCES_URL + gameName + "/" ) {
                             withCredentials([usernamePassword(credentialsId: SVM_CREDENTIALS_ID, usernameVariable: 'SVN_USER', passwordVariable: 'SVN_PASSWORD')]) {
-                                echo "${gameName} 切换到 SVN URL: ${gameUrl}"
                                 sh(script: "${SVN_INSTALL_PATH} switch ${gameUrl} --username \$SVN_USER --password \$SVN_PASSWORD")
                             }
                         }

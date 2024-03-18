@@ -15,12 +15,9 @@ pipeline {
     }
 
     stages {
-
         stage('Pack cocos') {
             steps {
                 script {
-                    echo'Pack cocos'
-
                     dir( PROJ_ANDROID_URL ) {
                         script { 
                             def jsonContent = """{
@@ -45,7 +42,6 @@ pipeline {
                             writeFile file: PROJ_ANDROID_URL+"build-cfg-original.json", text: jsonContent
 
                             sh "rm -rf /Users/tmd/Documents/tmd/SouthPark/ClientCocos/bin/release/tmp*"
-
                             BUILD_SHELL_FILE = "Build_Release_Encode.sh" 
                             sh 'chmod +x /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/Build_Release_Encode.sh'
                             sh "./${BUILD_SHELL_FILE} release"
@@ -58,7 +54,6 @@ pipeline {
         stage('Good Guy cleaning build-cfg-original.json') {
             steps {
                 script {
-                    echo'Move PackingData to Android Assets from 4463'
                     dir(PROJ_ANDROID_URL) {
                         script {
                             def svnRevertCmd = "${SVN_INSTALL_PATH} revert ${PROJ_ANDROID_URL + "build-cfg-original.json"}"
@@ -72,7 +67,6 @@ pipeline {
         stage('Move cocos Resource to IOS Assets') {
             steps {
                 script {
-                    echo'Move cocos to IOS Assets'
                     script {
                         sh "rm -rf /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/*"
                         sh  "cp -r /Users/tmd/Documents/tmd/SouthPark/ClientCocos/bin/release/tmp/cocos /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/"
@@ -86,16 +80,10 @@ pipeline {
         stage('Move Inanna Resource to Ios Assets from 4463') {
             steps {
                 script {
-                    echo'Move PackingData to Android Assets from 4463'
-
-                    // 定義源資料夾
                     def luaSource = '/Volumes/TMD_PUBLIC/TMD/testing/ios/Inanna/InannaLua'
                     def resourcesSource = '/Volumes/TMD_PUBLIC/TMD/testing/ios/Inanna/InannaResource'
-
-                    // 定義目標目錄
                     def targetDirectory = '/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/'
 
-                    // 搬移 InannaLua 和 InannaResource 資料夾到目標目錄
                     sh "cp -R ${luaSource} ${targetDirectory}"
                     sh "cp -R ${resourcesSource} ${targetDirectory}"
 
@@ -105,11 +93,9 @@ pipeline {
             }
         }
 
-
         stage('Move Basic Game Resource to IOS Assets from 4463') {
             steps {
                 script {
-                    echo "Move PackingData to IOS Assets from 4463"
                     def resources = BASIC_GAME.split(" ")
                     resources.each { resourceName ->
                         def sourceSubDir = resourceName
@@ -122,7 +108,6 @@ pipeline {
                         }
 
                         def path = ""
-
                         if (sourceSubDir == 'ManganDahen') {
                             path = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/MDLua"
                         } else if (sourceSubDir == 'XXX') {
@@ -140,7 +125,6 @@ pipeline {
         stage('Move Review Game Resource to IOS Assets from 4463') {
             steps {
                 script {
-                    echo "Move PackingData to IOS Assets from 4463"
                     def resources = params.IOS_RESOURCES.split(" ")
                     resources.each { resourceName ->
                         def sourceSubDir = resourceName
@@ -159,7 +143,7 @@ pipeline {
                         }  else {
                             path = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/${sourceSubDir}Lua"
                         }
-                         decompressZipFiles(path)
+                        decompressZipFiles(path)
                     }
                 }
             }
@@ -168,13 +152,8 @@ pipeline {
         stage('Good Guy Clean Up') {
             steps {
                 script {
-                     // 定義目標目錄
                     def targetDirectory = '/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/'
-                    
-                    // 删除 .zip 文件
-                    sh """
-                    find ${targetDirectory} -type f -name '*.zip' -exec rm {} \\;
-                    """
+                    sh """ find ${targetDirectory} -type f -name '*.zip' -exec rm {} \\;  """
                 }
             }
         }

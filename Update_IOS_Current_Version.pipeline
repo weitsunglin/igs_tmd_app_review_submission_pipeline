@@ -30,8 +30,6 @@ pipeline {
         stage('更新蘋果最大版號') {
             steps {
                 script {
-                    
-                    //DB環境
                     if (params.DB_ENVIORNMENT == '外部') {
                        MSSQL_SERVER = '10.100.20.25'
                     } 

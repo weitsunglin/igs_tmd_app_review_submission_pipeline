@@ -29,7 +29,6 @@ pipeline {
                 script {
                     def InanaUrl = "http://192.168.1.183/svn/Inanna/branches/ReleaseIOS"
 
-                    // 切換平台
                     dir("${TMD_RESOURCES_URL}Inanna/") {
                         withCredentials([usernamePassword(credentialsId: SVM_CREDENTIALS_ID, usernameVariable: 'SVN_USER', passwordVariable: 'SVN_PASSWORD')]) {
                             sh "${SVN_INSTALL_PATH} switch ${InanaUrl} --username \${SVN_USER} --password \$SVN_PASSWORD"
@@ -37,7 +36,6 @@ pipeline {
                         }
                     }
 
-                    // 切換其它
                     resources.each { resource ->
                         dir("${TMD_RESOURCES_URL}${resource.name}") {
                             withCredentials([usernamePassword(credentialsId: SVM_CREDENTIALS_ID, usernameVariable: 'SVN_USER', passwordVariable: 'SVN_PASSWORD')]) {

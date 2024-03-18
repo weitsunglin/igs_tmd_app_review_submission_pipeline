@@ -16,7 +16,6 @@ pipeline {
         versionsUpdated = false
         GAMEENV = 'Android'
         REMOTE_CREDENTIALS ='remote4463_login'
-
     }
 
     stages {

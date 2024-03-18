@@ -16,7 +16,6 @@ pipeline {
     }
     
     stages {
-
         stage('Parameter Check') {
             steps {
                 script {
@@ -30,8 +29,6 @@ pipeline {
         stage('更新安卓商店最大版號') {
             steps {
                 script {
-                    
-                    //DB環境
                     if (params.DB_ENVIORNMENT == '外部') {
                        MSSQL_SERVER = '10.100.20.25'
                     } 
@@ -40,8 +37,7 @@ pipeline {
                     }
 
                     CURRENTVERSION = params.CURRENT_VERSION
-                    
-                    //REMOTE
+
                     withCredentials([usernamePassword(credentialsId: REMOTE_CREDENTIALS, passwordVariable: 'REMOTE_PASSWORD', usernameVariable: 'REMOTE_USER')]) {
                         def remote = getRemoteConfig("192.168.44.63", REMOTE_USER, REMOTE_PASSWORD)
                         withCredentials([usernamePassword(credentialsId: TMD_DB, usernameVariable: 'DB_ACCOUNT', passwordVariable: 'DB_PASSWORD')]) {
@@ -67,7 +63,6 @@ pipeline {
         stage('更新安卓官方最大版號') {
             steps {
                 script {
-                    
                     //DB環境
                     if (params.DB_ENVIORNMENT == '外部') {
                        MSSQL_SERVER = '10.100.20.25'

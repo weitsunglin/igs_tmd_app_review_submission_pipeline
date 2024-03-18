@@ -27,13 +27,9 @@ pipeline {
                     }
                     SVN = "${env.SVN_INSTALL_PATH}/svn"
 
-                     // Extract the last segment of the NEW_VERSION parameter
                     def versionCode = params.NEW_VERSION.tokenize('.').last() as Integer
-                    
-                    // Determine if the versionCode is odd or even
                     def isEven = versionCode % 2 == 0
                     
-                    // Check the game environment and version compatibility
                     if ((isEven && GAMEENV != 'iOS') || (!isEven && GAMEENV != 'Android')) {
                         error("The selected GAMEENV is incompatible with the NEW_VERSION. For even versions, select 'iOS'. For odd versions, select 'Android'. Pipeline execution is terminated to prevent build configuration errors.")
                     }
@@ -58,17 +54,13 @@ pipeline {
                             def updatedVersions = writeJSON returnText: true, json: versions
                             writeFile file: filePath, text: updatedVersions
 
-                            echo "Updated versions: ${versions}"
-
                             svnCommitMessage = "Updated targetversion from 2412 jenkins ${platform} version to ${newVersion}"
                             versionsUpdated = true
                         } 
                         else {
-                            echo "Version $newVersion already exists for $platform, not adding it again."
                             versionsUpdated = false
                         }
                     } else {
-                        echo "Platform $platform does not exist."
                         versionsUpdated = false
                     }
                 }
@@ -78,10 +70,8 @@ pipeline {
         stage('SVN commit target version') {
             steps {
                 script{
-                    echo 'SVN commit target version'
                     dir(PROJ_ANDROID_URL){
                         if (versionsUpdated) {
-                            echo 'Proceeding with SVN commit...'
                             def commitMessage = "jenkins 2412 auto commit target version"
                             svnCommit(filePath, commitMessage)
                         } 
@@ -96,7 +86,6 @@ pipeline {
         stage('ReplaceBatchFlie') {
             steps {
                 script{
-                    echo 'ReplaceBatchFlie'
                     def svn = "/opt/homebrew/bin/svn"                    
                     withCredentials([usernamePassword(credentialsId: SVM_CREDENTIALS_ID, usernameVariable: 'SVN_USER', passwordVariable: 'SVN_PASSWORD')]) {
                         sh """
@@ -112,14 +101,13 @@ pipeline {
         stage('Move ffsBatch') {
             steps {
                 script{
-                    echo 'Move ffsBatch'
                      def destinationFolder = ""
-                        if (GAMEENV =='Android') {
-                           destinationFolder= "/Volumes/TMD_PUBLIC/TMD/testing/android/"
-                        } 
-                        else {
-                            destinationFolder= "/Volumes/TMD_PUBLIC/TMD/testing/ios/"
-                        }
+                    if (GAMEENV =='Android') {
+                        destinationFolder= "/Volumes/TMD_PUBLIC/TMD/testing/android/"
+                    } 
+                    else {
+                        destinationFolder= "/Volumes/TMD_PUBLIC/TMD/testing/ios/"
+                    }
                     def sourceFolder = "/Users/tmd/Documents/tmd/SouthPark/Jenkins/SyncFileTemp/Output/"
                     sh "cp -r ${sourceFolder}* ${destinationFolder}"
                 }
@@ -130,11 +118,8 @@ pipeline {
             steps {
                 script{
                     dir(PROJ_ANDROID_URL){
-                        // 生成 .ffs_batch 文件内容
                         def ffsContent = generateFfsBatchContent(params.NEW_VERSION)
                         writeFile file: 'TMD_testing_new_version_to_4055.ffs_batch', text: ffsContent
-
-                        //複製搬移資料夾的bat到44.63
                         def destinationFolder = "/Volumes/TMD_PUBLIC/TMD/testing/"
                         def sourceFolder = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/TMD_testing_new_version_to_4055.ffs_batch"
                         sh "cp -r ${sourceFolder}* ${destinationFolder}"
@@ -146,13 +131,10 @@ pipeline {
         stage('Create new Version resources in 4463') {
             steps {
                 script{
-                    //REMOTE
                     withCredentials([usernamePassword(credentialsId: REMOTE_CREDENTIALS, passwordVariable: 'REMOTE_PASSWORD', usernameVariable: 'REMOTE_USER')]) {
                         def remote = getRemoteConfig("192.168.44.63", REMOTE_USER, REMOTE_PASSWORD)
-
                         def sourceFolder = GAMEENV == 'iOS' ? "D:\\TMD_PUBLIC\\TMD\\testing\\ios" : "D:\\TMD_PUBLIC\\TMD\\testing\\android"
                         def newVersionFolder = "D:\\TMD_PUBLIC\\TMD\\testing\\${params.NEW_VERSION}"
-
                         def checkAndCopyCmd = "if not exist \"${newVersionFolder}\" (mkdir \"${newVersionFolder}\" && xcopy /E /I \"${sourceFolder}\\*\" \"${newVersionFolder}\")"
                         sshCommand remote: remote, command: checkAndCopyCmd
                     }
@@ -164,8 +146,6 @@ pipeline {
         stage('Move testing game resources to 4055') {
             steps {
                 script{
-                    echo '4055 New testing version resources folder'
-
                     //REMOTE
                     withCredentials([usernamePassword(credentialsId: REMOTE_CREDENTIALS, passwordVariable: 'REMOTE_PASSWORD', usernameVariable: 'REMOTE_USER')]) {
                         def remote = getRemoteConfig("192.168.44.63", REMOTE_USER, REMOTE_PASSWORD)
@@ -183,14 +163,12 @@ pipeline {
          stage('Good guy will clean environment') {
             steps {
                 script{
-                    // 刪除本地的 TMD_testing_new_version_to_4055.ffs_batch 文件
                     dir(PROJ_ANDROID_URL){
                         echo 'rm -f TMD_testing_new_version_to_4055.ffs_batch'
                         sh "rm -f TMD_testing_new_version_to_4055.ffs_batch"    
                     }
 
-
-                     //刪除44.63上的1.1.186資料夾
+                    //刪除44.63上的1.1.186資料夾
                     withCredentials([usernamePassword(credentialsId: REMOTE_CREDENTIALS, passwordVariable: 'REMOTE_PASSWORD', usernameVariable: 'REMOTE_USER')]) {
                         def remote = getRemoteConfig("192.168.44.63", REMOTE_USER, REMOTE_PASSWORD)
                         try {
@@ -203,7 +181,6 @@ pipeline {
             }
         }
     }
-
 
     post {
         always {
@@ -235,7 +212,6 @@ def svnCommit(String filePath, String commitMessage) {
 }
 
 def generateFfsBatchContent(String newVersion) {
-    // 假设这是你原有的 .ffs_batch 文件的模板内容
     String template = '''<?xml version="1.0" encoding="utf-8"?>
 <FreeFileSync XmlType="BATCH" XmlFormat="19">
     <Notes/>
@@ -291,11 +267,8 @@ def generateFfsBatchContent(String newVersion) {
     </Batch>
 </FreeFileSync>'''
 
-
-    
     // 替换模板中的版本号
     template = template.replaceAll("_newVersion_", newVersion)
-    
     
     return template
 }
