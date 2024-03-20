@@ -60,12 +60,18 @@ pipeline {
     
     post {
         always {
-             emailext (
+            // 使用 emailext 插件发送邮件
+            emailext (
+                // 收件人为 Director@igs.com.tw
                 to: "${Director}@igs.com.tw",
+                // 邮件主题为当前构建的结果
                 subject: "${currentBuild.currentResult}",
+                // 邮件正文包括当前构建的结果和 AndroidStudio_Build_Set
                 body: "${currentBuild.currentResult}, AndroidStudio_Build_Set",
-                attachmentsPattern: '/Users/tmd/Desktop/production_android_app/store-release.apk, /Users/tmd/Desktop/production_android_app/store-release.aab, /Users/tmd/Desktop/production_android_app/offical-release.apk'
+                // 附件模式为匹配指定目录中的所有 .apk 和 .aab 文件
+                attachmentsPattern: '/Users/tmd/Desktop/production_android_app/*.apk, /Users/tmd/Desktop/production_android_app/*.aab'
             )
         }
     }
+
 }
