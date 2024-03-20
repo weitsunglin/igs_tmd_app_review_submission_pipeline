@@ -3,7 +3,7 @@ pipeline {
     
     parameters {
         string(name: 'BUILDER_NAME', defaultValue: 'weitsunglin', description: 'Your Name')
-        choice(name: 'Director', choices: ['youhewang@igs.com.tw', 'taiminglu@igs.com.tw','mikeli@igs.com.tw','yihsinliou@igs.com.tw','chaoenchou@igs.com.tw','chenhongluo@igs.com.tw','jiaweiwu@igs.com.tw','poyanchen@igs.com.tw'], description: '選擇編導信箱')
+        choice(name: 'DIRECTOR', choices: ['youhewang@igs.com.tw', 'taiminglu@igs.com.tw','mikeli@igs.com.tw','yihsinliou@igs.com.tw','chaoenchou@igs.com.tw','chenhongluo@igs.com.tw','jiaweiwu@igs.com.tw','poyanchen@igs.com.tw'], description: '選擇編導信箱')
         string(name: 'VERSION_NAME', defaultValue: '1.1.xxx', description: 'Version Name: Android version 1.1.175')
         string(name: 'VERSION_CODE', defaultValue: '1000xxx', description: 'Version Code: Increment by one when uploading to PLAYSTORE')
     }
@@ -62,8 +62,8 @@ pipeline {
         always {
             // 使用 emailext 插件发送邮件
             emailext (
-                // 收件人为 Director@igs.com.tw
-                to: "${Director}@igs.com.tw",
+                // 收件人为 DIRECTOR@igs.com.tw
+                to: "${params.DIRECTOR}@igs.com.tw",
                 // 邮件主题为当前构建的结果
                 subject: "${currentBuild.currentResult}",
                 // 邮件正文包括当前构建的结果和 AndroidStudio_Build_Set
