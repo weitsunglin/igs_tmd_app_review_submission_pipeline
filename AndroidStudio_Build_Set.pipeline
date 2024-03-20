@@ -62,10 +62,10 @@ pipeline {
         always {
             // 使用 emailext 插件发送邮件
             emailext (
-                to: "${params.DIRECTOR}@igs.com.tw",
+                to: "${params.DIRECTOR}",
                 subject: "${currentBuild.currentResult}",
                 body: "${currentBuild.currentResult}, AndroidStudio_Build_Set",
-               attachmentsPattern: '/Users/tmd/Desktop/production_android_app/*.apk /Users/tmd/Desktop/production_android_app/*.aab'
+                attachmentsPattern: '/Users/tmd/Desktop/production_android_app/*.apk /Users/tmd/Desktop/production_android_app/*.aab'
             )
         }
     }
