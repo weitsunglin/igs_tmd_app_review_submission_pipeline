@@ -62,16 +62,11 @@ pipeline {
         always {
             // 使用 emailext 插件发送邮件
             emailext (
-                // 收件人为 DIRECTOR@igs.com.tw
                 to: "${params.DIRECTOR}@igs.com.tw",
-                // 邮件主题为当前构建的结果
                 subject: "${currentBuild.currentResult}",
-                // 邮件正文包括当前构建的结果和 AndroidStudio_Build_Set
                 body: "${currentBuild.currentResult}, AndroidStudio_Build_Set",
-                // 附件模式为匹配指定目录中的所有 .apk 和 .aab 文件
-                attachmentsPattern: '/Users/tmd/Desktop/production_android_app/*.apk, /Users/tmd/Desktop/production_android_app/*.aab'
+               attachmentsPattern: '/Users/tmd/Desktop/production_android_app/*.apk /Users/tmd/Desktop/production_android_app/*.aab'
             )
         }
     }
-
 }
