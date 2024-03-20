@@ -139,20 +139,21 @@ pipeline {
                 script {
                     try {
 
-                        def appSource = ""
-                        def appDirection = "/Users/tmd/Desktop/production_andrid_app/"
+                    def appSource = ""
+                    def appDirection = "/Users/tmd/Desktop/production_andrid_app/"
 
-                        sh "mkdir -p '${appDirection}'"
+                    sh "mkdir -p '${appDirection}'"
 
-                        if (params.BUILD_TYPE == 'aab') {
-                           appSource = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/build/outputs/bundle/release/proj.android-release.aab"
-                        } else {
-                           appSource = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/build/outputs/apk/release/proj.android-release.apk"
-                        }
+                    if (params.BUILD_TYPE == 'aab') {
+                        appSource = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/build/outputs/bundle/release/proj.android-release.aab"
+                    } else {
+                        appSource = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/build/outputs/apk/release/proj.android-release.apk"
+                    }
 
-                        sh """
-                        mv '${appSource}' '${appDirection}'proj.android-release.'${params.BUILD_TYPE}'
-                        """
+                    sh """
+                    mv '${appSource}' '${appDirection}proj.android-release.${params.BUILD_TYPE}'
+                    """
+
                     } catch (Exception e) {
                         echo "Failed in Change app Name and Throw to desktop: ${e.getMessage()}"
                     }
