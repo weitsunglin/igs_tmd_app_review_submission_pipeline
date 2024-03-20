@@ -154,6 +154,10 @@ pipeline {
                     mv '${appSource}' '${appDirection}proj.android-release.${params.BUILD_TYPE}'
                     """
 
+                    sh """
+                    mv '${appDirection}proj.android-release.${params.BUILD_TYPE}' '${appDirection}${params.NDK_TYPE}-release.${params.BUILD_TYPE}' 
+                    """
+
                     } catch (Exception e) {
                         echo "Failed in Change app Name and Throw to desktop: ${e.getMessage()}"
                     }
