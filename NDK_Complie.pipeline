@@ -12,11 +12,18 @@ pipeline {
     }
 
     stages {
+
         stage('Delete Resources') {
             steps {
                 script {
-                    sh "rm -rf /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/libs_${params.ANDROID_VERSION}"
-                    sh "rm -rf /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/obj_${params.ANDROID_VERSION}"
+                    try {
+                        sh "rm -rf /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/libs_${params.ANDROID_VERSION}"
+                        sh "rm -rf /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/obj_${params.ANDROID_VERSION}"
+                    } catch (Exception e) {
+                        echo "Delete Resources with error: ${e.message}"
+                        // You can choose to handle or throw the exception as per your requirement
+                        // throw e
+                    }
                 }
             }
         }
@@ -45,8 +52,7 @@ pipeline {
                             }
                         }
                         writeFile(file: filePath, text: newContent.join("\n"))
-                    } 
-                    catch (Exception e) {
+                    } catch (Exception e) {
                         echo "Build Prepare with error: ${e.message}"
                         throw e
                     }
@@ -54,11 +60,17 @@ pipeline {
             }
         }
 
+
         stage('Build NDK') {
             steps {
                 script {
-                    dir(PROJ_ANDROID_PATH) {
-                        sh "bash build_release_jenkins.sh ${params.CPU_COUNT}"
+                    try {
+                        dir(PROJ_ANDROID_PATH) {
+                            sh "bash build_release_jenkins.sh ${params.CPU_COUNT}"
+                        }
+                    } catch (Exception e) {
+                        echo "Build NDK with error: ${e.message}"
+                        throw e
                     }
                 }
             }
@@ -67,29 +79,35 @@ pipeline {
         stage('Fix Resources Name and Move to ndk_temps') {
             steps {
                 script {
-                    sh "mkdir -p /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/ndk_temps"
-                    if (params.ANDROID_VERSION == '商店版') {
+                    try {
+                        sh "mkdir -p /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/ndk_temps"
+                        if (params.ANDROID_VERSION == '商店版') {
 
-                        sh "rm -rf /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/ndk_temps/obj_store"
-                        sh "rm -rf /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/ndk_temps/libs_store"
+                            sh "rm -rf /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/ndk_temps/obj_store"
+                            sh "rm -rf /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/ndk_temps/libs_store"
 
-                        sh '''
-                        mv /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/obj /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/ndk_temps/obj_store
-                        mv /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/libs /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/ndk_temps/libs_store
-                        '''
-                    } else {
+                            sh '''
+                            mv /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/obj /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/ndk_temps/obj_store
+                            mv /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/libs /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/ndk_temps/libs_store
+                            '''
+                        } else {
 
-                        sh "rm -rf /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/ndk_temps/obj_offical"
-                        sh "rm -rf /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/ndk_temps/libs_offical"
+                            sh "rm -rf /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/ndk_temps/obj_offical"
+                            sh "rm -rf /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/ndk_temps/libs_offical"
 
-                        sh '''
-                        mv /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/obj /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/ndk_temps/obj_offical
-                        mv /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/libs /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/ndk_temps/libs_offical
-                        '''
+                            sh '''
+                            mv /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/obj /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/ndk_temps/obj_offical
+                            mv /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/libs /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/ndk_temps/libs_offical
+                            '''
+                        }
+                    } catch (Exception e) {
+                        echo "Fix Resources Name and Move to ndk_temps with error: ${e.message}"
+                        throw e
                     }
                 }
             }
         }
+
     }
 
     post {

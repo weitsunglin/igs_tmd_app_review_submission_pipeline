@@ -29,19 +29,19 @@ pipeline {
         stage('更新安卓商店最大版號') {
             steps {
                 script {
-                    if (params.DB_ENVIORNMENT == '外部') {
-                       MSSQL_SERVER = '10.100.20.25'
-                    } 
-                    else {
-                       MSSQL_SERVER = 'db-gt-test24.gametower.com.tw'
-                    }
+                    try {
+                        if (params.DB_ENVIORNMENT == '外部') {
+                        MSSQL_SERVER = '10.100.20.25'
+                        } 
+                        else {
+                        MSSQL_SERVER = 'db-gt-test24.gametower.com.tw'
+                        }
 
-                    CURRENTVERSION = params.CURRENT_VERSION
+                        CURRENTVERSION = params.CURRENT_VERSION
 
-                    withCredentials([usernamePassword(credentialsId: REMOTE_CREDENTIALS, passwordVariable: 'REMOTE_PASSWORD', usernameVariable: 'REMOTE_USER')]) {
-                        def remote = getRemoteConfig("192.168.44.63", REMOTE_USER, REMOTE_PASSWORD)
-                        withCredentials([usernamePassword(credentialsId: TMD_DB, usernameVariable: 'DB_ACCOUNT', passwordVariable: 'DB_PASSWORD')]) {
-                            try {
+                        withCredentials([usernamePassword(credentialsId: REMOTE_CREDENTIALS, passwordVariable: 'REMOTE_PASSWORD', usernameVariable: 'REMOTE_USER')]) {
+                            def remote = getRemoteConfig("192.168.44.63", REMOTE_USER, REMOTE_PASSWORD)
+                            withCredentials([usernamePassword(credentialsId: TMD_DB, usernameVariable: 'DB_ACCOUNT', passwordVariable: 'DB_PASSWORD')]) {
                                 //修改currentVersion 
                                 def updateDbCommand = "sqlcmd -S ${MSSQL_SERVER} -d ${MSSQL_DATABASE} -U ${DB_ACCOUNT} -P ${DB_PASSWORD} -Q \"UPDATE MobileApp SET currentVersion = '${CURRENTVERSION}' WHERE gameId = '2112' AND userClientType = Android AND variation = 0\""
                                 sshCommand remote: remote, command: updateDbCommand
@@ -49,12 +49,11 @@ pipeline {
                                 //確認currentVersion 
                                 def confirm_dbCommand = "sqlcmd -S ${MSSQL_SERVER} -d ${MSSQL_DATABASE} -U ${DB_ACCOUNT} -P ${DB_PASSWORD} -Q \"SELECT TOP 999 * FROM MobileApp WHERE gameId = '2112' AND userClientType = Android AND variation = 0\""
                                 sshCommand remote: remote, command: confirm_dbCommand
-
-                            } catch (Exception e) {
-                                echo "Caught an exception: ${e.getMessage()}"
-                                throw e
                             }
                         }
+                    } catch (Exception e) {
+                        echo "更新安卓商店最大版號 with error: ${e.message}"
+                        throw e
                     }
                 }
             }
@@ -63,21 +62,21 @@ pipeline {
         stage('更新安卓官方最大版號') {
             steps {
                 script {
-                    //DB環境
-                    if (params.DB_ENVIORNMENT == '外部') {
-                       MSSQL_SERVER = '10.100.20.25'
-                    } 
-                    else {
-                       MSSQL_SERVER = 'db-gt-test24.gametower.com.tw'
-                    }
+                    try {
+                        //DB環境
+                        if (params.DB_ENVIORNMENT == '外部') {
+                        MSSQL_SERVER = '10.100.20.25'
+                        } 
+                        else {
+                        MSSQL_SERVER = 'db-gt-test24.gametower.com.tw'
+                        }
 
-                    CURRENTVERSION = params.CURRENT_VERSION
-                    
-                    //REMOTE
-                    withCredentials([usernamePassword(credentialsId: REMOTE_CREDENTIALS, passwordVariable: 'REMOTE_PASSWORD', usernameVariable: 'REMOTE_USER')]) {
-                        def remote = getRemoteConfig("192.168.44.63", REMOTE_USER, REMOTE_PASSWORD)
-                        withCredentials([usernamePassword(credentialsId: TMD_DB, usernameVariable: 'DB_ACCOUNT', passwordVariable: 'DB_PASSWORD')]) {
-                            try {
+                        CURRENTVERSION = params.CURRENT_VERSION
+                        
+                        //REMOTE
+                        withCredentials([usernamePassword(credentialsId: REMOTE_CREDENTIALS, passwordVariable: 'REMOTE_PASSWORD', usernameVariable: 'REMOTE_USER')]) {
+                            def remote = getRemoteConfig("192.168.44.63", REMOTE_USER, REMOTE_PASSWORD)
+                            withCredentials([usernamePassword(credentialsId: TMD_DB, usernameVariable: 'DB_ACCOUNT', passwordVariable: 'DB_PASSWORD')]) {
                                 //修改currentVersion 
                                 def updateDbCommand = "sqlcmd -S ${MSSQL_SERVER} -d ${MSSQL_DATABASE} -U ${DB_ACCOUNT} -P ${DB_PASSWORD} -Q \"UPDATE MobileApp SET currentVersion = '${CURRENTVERSION}' WHERE gameId = '2112' AND userClientType = Android_IGS AND variation = 0\""
                                 sshCommand remote: remote, command: updateDbCommand
@@ -85,16 +84,16 @@ pipeline {
                                 //確認currentVersion 
                                 def confirm_dbCommand = "sqlcmd -S ${MSSQL_SERVER} -d ${MSSQL_DATABASE} -U ${DB_ACCOUNT} -P ${DB_PASSWORD} -Q \"SELECT TOP 999 * FROM MobileApp WHERE gameId = '2112' AND userClientType = Android_IGS AND variation = 0\""
                                 sshCommand remote: remote, command: confirm_dbCommand
-
-                            } catch (Exception e) {
-                                echo "Caught an exception: ${e.getMessage()}"
-                                throw e
                             }
                         }
+                    } catch (Exception e) {
+                        echo "更新安卓官方最大版號 with error: ${e.message}"
+                        throw e
                     }
                 }
             }
         }
+
     }
 
     post {

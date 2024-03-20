@@ -40,42 +40,49 @@ pipeline {
         stage('Update Version Info') {
             steps {
                 script {
-                    filePath = '/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/targetVersion.json'
+                    try {
+                        filePath = '/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/targetVersion.json'
+                        
+                        def versionsFile = readFile filePath
+                        def versions = readJSON text: versionsFile
+                        String platform = GAMEENV
                     
-                    def versionsFile = readFile filePath
-                    def versions = readJSON text: versionsFile
-                    String platform = GAMEENV
-                   
-                    String newVersion = params.NEW_VERSION
+                        String newVersion = params.NEW_VERSION
 
-                    if (versions.containsKey(platform)) {
-                        if (!versions[platform].contains(newVersion)) {
-                            versions[platform].add(newVersion)
-                            def updatedVersions = writeJSON returnText: true, json: versions
-                            writeFile file: filePath, text: updatedVersions
+                        if (versions.containsKey(platform)) {
+                            if (!versions[platform].contains(newVersion)) {
+                                versions[platform].add(newVersion)
+                                def updatedVersions = writeJSON returnText: true, json: versions
+                                writeFile file: filePath, text: updatedVersions
 
-                            svnCommitMessage = "Updated targetversion from 2412 jenkins ${platform} version to ${newVersion}"
-                            versionsUpdated = true
-                        } 
-                        else {
+                                svnCommitMessage = "Updated targetversion from 2412 jenkins ${platform} version to ${newVersion}"
+                                versionsUpdated = true
+                            } else {
+                                versionsUpdated = false
+                            }
+                        } else {
                             versionsUpdated = false
                         }
-                    } else {
-                        versionsUpdated = false
+                    } catch (Exception e) {
+                        echo "Error in 'Update Version Info': ${e.getMessage()}"
                     }
                 }
             }
         }
 
+
         stage('SVN commit target version') {
             steps {
-                script{
-                    dir(PROJ_ANDROID_URL){
+                script {
+                    dir(PROJ_ANDROID_URL) {
                         if (versionsUpdated) {
-                            def commitMessage = "jenkins 2412 auto commit target version"
-                            svnCommit(filePath, commitMessage)
-                        } 
-                        else {
+                            try {
+                                def commitMessage = "jenkins 2412 auto commit target version"
+                                svnCommit(filePath, commitMessage)
+                            } catch (Exception e) {
+                                echo "Error in 'SVN commit target version': ${e.getMessage()}"
+                            }
+                        } else {
                             echo 'No version updates to commit.'
                         }
                     }
@@ -83,46 +90,61 @@ pipeline {
             }
         }
 
-        stage('ReplaceBatchFlie') {
-            steps {
-                script{
-                    def svn = "/opt/homebrew/bin/svn"                    
-                    withCredentials([usernamePassword(credentialsId: SVM_CREDENTIALS_ID, usernameVariable: 'SVN_USER', passwordVariable: 'SVN_PASSWORD')]) {
-                        sh """
-                        ${svn} update /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/targetVersion.json --username \$SVN_USER --password \$SVN_PASSWORD --non-interactive
-                        """
-                    }
 
-                    sh "/Users/tmd/Documents/tmd/SouthPark/Jenkins/SyncFileTemp/replace_jenkins.sh ${GAMEENV}"
+        stage('ReplaceBatchFile') {
+            steps {
+                script {
+                    try {
+                        def svn = "/opt/homebrew/bin/svn"                    
+                        withCredentials([usernamePassword(credentialsId: SVM_CREDENTIALS_ID, usernameVariable: 'SVN_USER', passwordVariable: 'SVN_PASSWORD')]) {
+                            sh """
+                            ${svn} update /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/targetVersion.json --username \$SVN_USER --password \$SVN_PASSWORD --non-interactive
+                            """
+                        }
+
+                        sh "/Users/tmd/Documents/tmd/SouthPark/Jenkins/SyncFileTemp/replace_jenkins.sh ${GAMEENV}"
+                    } catch (Exception e) {
+                        echo "Error in 'ReplaceBatchFile': ${e.getMessage()}"
+                    }
                 }
             }
         }
+
 
         stage('Move ffsBatch') {
             steps {
-                script{
-                     def destinationFolder = ""
-                    if (GAMEENV =='Android') {
-                        destinationFolder= "/Volumes/TMD_PUBLIC/TMD/testing/android/"
-                    } 
-                    else {
-                        destinationFolder= "/Volumes/TMD_PUBLIC/TMD/testing/ios/"
+                script {
+                    try {
+                        def destinationFolder = ""
+                        if (GAMEENV == 'Android') {
+                            destinationFolder= "/Volumes/TMD_PUBLIC/TMD/testing/android/"
+                        } else {
+                            destinationFolder= "/Volumes/TMD_PUBLIC/TMD/testing/ios/"
+                        }
+                        def sourceFolder = "/Users/tmd/Documents/tmd/SouthPark/Jenkins/SyncFileTemp/Output/"
+                        sh "cp -r ${sourceFolder}* ${destinationFolder}"
+                    } catch (Exception e) {
+                        echo "Error in 'Move ffsBatch': ${e.getMessage()}"
                     }
-                    def sourceFolder = "/Users/tmd/Documents/tmd/SouthPark/Jenkins/SyncFileTemp/Output/"
-                    sh "cp -r ${sourceFolder}* ${destinationFolder}"
                 }
             }
         }
 
+
         stage('Create ffs_batch') {
             steps {
-                script{
-                    dir(PROJ_ANDROID_URL){
-                        def ffsContent = generateFfsBatchContent(params.NEW_VERSION)
-                        writeFile file: 'TMD_testing_new_version_to_4055.ffs_batch', text: ffsContent
-                        def destinationFolder = "/Volumes/TMD_PUBLIC/TMD/testing/"
-                        def sourceFolder = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/TMD_testing_new_version_to_4055.ffs_batch"
-                        sh "cp -r ${sourceFolder}* ${destinationFolder}"
+                script {
+                    try {
+                        dir(PROJ_ANDROID_URL) {
+                            def ffsContent = generateFfsBatchContent(params.NEW_VERSION)
+                            writeFile file: 'TMD_testing_new_version_to_4055.ffs_batch', text: ffsContent
+
+                            def destinationFolder = "/Volumes/TMD_PUBLIC/TMD/testing/"
+                            def sourceFolder = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/TMD_testing_new_version_to_4055.ffs_batch"
+                            sh "cp -r ${sourceFolder}* ${destinationFolder}"
+                        }
+                    } catch (Exception e) {
+                        echo "Error in 'Create ffs_batch': ${e.getMessage()}"
                     }
                 }
             }
@@ -130,51 +152,57 @@ pipeline {
 
         stage('Create new Version resources in 4463') {
             steps {
-                script{
+                script {
                     withCredentials([usernamePassword(credentialsId: REMOTE_CREDENTIALS, passwordVariable: 'REMOTE_PASSWORD', usernameVariable: 'REMOTE_USER')]) {
-                        def remote = getRemoteConfig("192.168.44.63", REMOTE_USER, REMOTE_PASSWORD)
-                        def sourceFolder = GAMEENV == 'iOS' ? "D:\\TMD_PUBLIC\\TMD\\testing\\ios" : "D:\\TMD_PUBLIC\\TMD\\testing\\android"
-                        def newVersionFolder = "D:\\TMD_PUBLIC\\TMD\\testing\\${params.NEW_VERSION}"
-                        def checkAndCopyCmd = "if not exist \"${newVersionFolder}\" (mkdir \"${newVersionFolder}\" && xcopy /E /I \"${sourceFolder}\\*\" \"${newVersionFolder}\")"
-                        sshCommand remote: remote, command: checkAndCopyCmd
-                    }
-                }
-            }
-        }
-
-        //44.63 create new version resources base on android or ios, and using free file sync throw the resources to 40.55
-        stage('Move testing game resources to 4055') {
-            steps {
-                script{
-                    //REMOTE
-                    withCredentials([usernamePassword(credentialsId: REMOTE_CREDENTIALS, passwordVariable: 'REMOTE_PASSWORD', usernameVariable: 'REMOTE_USER')]) {
-                        def remote = getRemoteConfig("192.168.44.63", REMOTE_USER, REMOTE_PASSWORD)
                         try {
-                            sshCommand remote: remote, 
-                                command: "D:/TMD_PUBLIC/TMD/testing/on_TMD_testing_new_version_to_4055.bat"
+                            def remote = getRemoteConfig("192.168.44.63", REMOTE_USER, REMOTE_PASSWORD)
+                            def sourceFolder = GAMEENV == 'iOS' ? "D:\\TMD_PUBLIC\\TMD\\testing\\ios" : "D:\\TMD_PUBLIC\\TMD\\testing\\android"
+                            def newVersionFolder = "D:\\TMD_PUBLIC\\TMD\\testing\\${params.NEW_VERSION}"
+                            def checkAndCopyCmd = "if not exist \"${newVersionFolder}\" (mkdir \"${newVersionFolder}\" && xcopy /E /I \"${sourceFolder}\\*\" \"${newVersionFolder}\")"
+                            sshCommand remote: remote, command: checkAndCopyCmd
                         } catch (Exception e) {
-                            echo "An error occurred while executing FreeFileSync.exe, but it's being ignored."
+                            echo "Error in 'Create new Version resources in 4463': ${e.getMessage()}"
                         }
                     }
                 }
             }
         }
 
-         stage('Good guy will clean environment') {
+
+        stage('Move testing game resources to 4055') {
             steps {
-                script{
-                    dir(PROJ_ANDROID_URL){
-                        echo 'rm -f TMD_testing_new_version_to_4055.ffs_batch'
-                        sh "rm -f TMD_testing_new_version_to_4055.ffs_batch"    
+                script {
+                    withCredentials([usernamePassword(credentialsId: REMOTE_CREDENTIALS, passwordVariable: 'REMOTE_PASSWORD', usernameVariable: 'REMOTE_USER')]) {
+                        def remote = getRemoteConfig("192.168.44.63", REMOTE_USER, REMOTE_PASSWORD)
+                        try {
+                            sshCommand remote: remote, command: "D:/TMD_PUBLIC/TMD/testing/on_TMD_testing_new_version_to_4055.bat"
+                        } catch (Exception e) {
+                            echo "Error in 'Move testing game resources to 4055': ${e.getMessage()}"
+                        }
+                    }
+                }
+            }
+        }
+
+
+        stage('Good guy will clean environment') {
+            steps {
+                script {
+                    dir(PROJ_ANDROID_URL) {
+                        try {
+                            echo 'Removing TMD_testing_new_version_to_4055.ffs_batch'
+                            sh "rm -f TMD_testing_new_version_to_4055.ffs_batch"
+                        } catch (Exception e) {
+                            echo "Error removing TMD_testing_new_version_to_4055.ffs_batch: ${e.getMessage()}"
+                        }
                     }
 
-                    //刪除44.63上的1.1.186資料夾
                     withCredentials([usernamePassword(credentialsId: REMOTE_CREDENTIALS, passwordVariable: 'REMOTE_PASSWORD', usernameVariable: 'REMOTE_USER')]) {
                         def remote = getRemoteConfig("192.168.44.63", REMOTE_USER, REMOTE_PASSWORD)
                         try {
                             sshCommand remote: remote, command: "rmdir /s /q \"D:/TMD_PUBLIC/TMD/testing/${params.NEW_VERSION}\""
                         } catch (Exception e) {
-                            echo "An error occurred while executing FreeFileSync.exe, but it's being ignored."
+                            echo "Error cleaning environment on remote server: ${e.getMessage()}"
                         }
                     }
                 }

@@ -19,23 +19,29 @@ pipeline {
     }
 
     stages {
-         stage('Parameter Check') {
+        stage('Parameter Check') {
             steps {
                 script {
-                    if (params.NEW_VERSION == '1.1.xxx') {
-                        error("The NEW_VERSION parameter is set to '1.1.xxx', which is a placeholder and not a valid version name. Pipeline execution is terminated to prevent build configuration errors.")
-                    }
-                    SVN = "${env.SVN_INSTALL_PATH}/svn"
+                    try {
+                        // 檢查NEW_VERSION參數是否設置為預設值
+                        if (params.NEW_VERSION == '1.1.xxx') {
+                            error("The NEW_VERSION parameter is set to '1.1.xxx', which is a placeholder and not a valid version name. Pipeline execution is terminated to prevent build configuration errors.")
+                        }
+                        SVN = "${env.SVN_INSTALL_PATH}/svn"
 
-                     // Extract the last segment of the NEW_VERSION parameter
-                    def versionCode = params.NEW_VERSION.tokenize('.').last() as Integer
-                    
-                    // Determine if the versionCode is odd or even
-                    def isEven = versionCode % 2 == 0
-                    
-                    // Check the game environment and version compatibility
-                    if ((isEven && GAMEENV != 'iOS') || (!isEven && GAMEENV != 'Android')) {
-                        error("The selected GAMEENV is incompatible with the NEW_VERSION. For even versions, select 'iOS'. For odd versions, select 'Android'. Pipeline execution is terminated to prevent build configuration errors.")
+                        // 提取NEW_VERSION參數的最後一段
+                        def versionCode = params.NEW_VERSION.tokenize('.').last() as Integer
+                        
+                        // 判斷versionCode是奇數還是偶數
+                        def isEven = versionCode % 2 == 0
+                        
+                        // 檢查遊戲環境與版本兼容性
+                        if ((isEven && GAMEENV != 'iOS') || (!isEven && GAMEENV != 'Android')) {
+                            error("The selected GAMEENV is incompatible with the NEW_VERSION. For even versions, select 'iOS'. For odd versions, select 'Android'. Pipeline execution is terminated to prevent build configuration errors.")
+                        }
+                    } catch (Exception e) {
+                        echo "Parameter Check stage failed: ${e.getMessage()}"
+                        throw e // 重新拋出異常，確保Jenkins流程能夠適當地處理錯誤
                     }
                 }
             }
@@ -44,50 +50,61 @@ pipeline {
         stage('Update Version Info') {
             steps {
                 script {
-                    filePath = '/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/targetVersion.json'
+                    try {
+                        filePath = '/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/targetVersion.json'
+                        
+                        def versionsFile = readFile filePath
+                        def versions = readJSON text: versionsFile
+                        String platform = GAMEENV
                     
-                    def versionsFile = readFile filePath
-                    def versions = readJSON text: versionsFile
-                    String platform = GAMEENV
-                   
-                    String newVersion = params.NEW_VERSION
+                        String newVersion = params.NEW_VERSION
 
-                    if (versions.containsKey(platform)) {
-                        if (!versions[platform].contains(newVersion)) {
-                            versions[platform].add(newVersion)
-                            def updatedVersions = writeJSON returnText: true, json: versions
-                            writeFile file: filePath, text: updatedVersions
+                        if (versions.containsKey(platform)) {
+                            if (!versions[platform].contains(newVersion)) {
+                                versions[platform].add(newVersion)
+                                def updatedVersions = writeJSON returnText: true, json: versions
+                                writeFile file: filePath, text: updatedVersions
 
-                            echo "Updated versions: ${versions}"
+                                echo "Updated versions: ${versions}"
 
-                            svnCommitMessage = "Updated targetversion from 2412 jenkins ${platform} version to ${newVersion}"
-                            versionsUpdated = true
-                        } 
-                        else {
-                            echo "Version $newVersion already exists for $platform, not adding it again."
+                                svnCommitMessage = "Updated targetversion from 2412 jenkins ${platform} version to ${newVersion}"
+                                versionsUpdated = true
+                            } 
+                            else {
+                                echo "Version $newVersion already exists for $platform, not adding it again."
+                                versionsUpdated = false
+                            }
+                        } else {
+                            echo "Platform $platform does not exist."
                             versionsUpdated = false
                         }
-                    } else {
-                        echo "Platform $platform does not exist."
-                        versionsUpdated = false
+                    } catch (Exception e) {
+                        echo "Update Version Info stage failed: ${e.getMessage()}"
+                        throw e // 重新拋出異常，確保Jenkins流程能夠適當地處理錯誤
                     }
                 }
             }
         }
 
+
         stage('SVN commit target version') {
             steps {
                 script{
-                    echo 'SVN commit target version'
-                    dir(PROJ_ANDROID_URL){
-                        if (versionsUpdated) {
-                            echo 'Proceeding with SVN commit...'
-                            def commitMessage = "jenkins 2412 auto commit target version"
-                            svnCommit(filePath, commitMessage)
-                        } 
-                        else {
-                            echo 'No version updates to commit.'
+                    try {
+                        echo 'SVN commit target version'
+                        dir(PROJ_ANDROID_URL){
+                            if (versionsUpdated) {
+                                echo 'Proceeding with SVN commit...'
+                                def commitMessage = "jenkins 2412 auto commit target version"
+                                svnCommit(filePath, commitMessage)
+                            } 
+                            else {
+                                echo 'No version updates to commit.'
+                            }
                         }
+                    } catch (Exception e) {
+                        echo "SVN commit target version stage failed: ${e.getMessage()}"
+                        throw e // Re-throw the exception to make Jenkins aware of the failure
                     }
                 }
             }
@@ -96,15 +113,20 @@ pipeline {
         stage('ReplaceBatchFlie') {
             steps {
                 script{
-                    echo 'ReplaceBatchFlie'
-                    def svn = "/opt/homebrew/bin/svn"                    
-                    withCredentials([usernamePassword(credentialsId: SVM_CREDENTIALS_ID, usernameVariable: 'SVN_USER', passwordVariable: 'SVN_PASSWORD')]) {
-                        sh """
-                        ${svn} update /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/targetVersion.json --username \$SVN_USER --password \$SVN_PASSWORD --non-interactive
-                        """
-                    }
+                    try {
+                        echo 'ReplaceBatchFlie'
+                        def svn = "/opt/homebrew/bin/svn"                    
+                        withCredentials([usernamePassword(credentialsId: SVM_CREDENTIALS_ID, usernameVariable: 'SVN_USER', passwordVariable: 'SVN_PASSWORD')]) {
+                            sh """
+                            ${svn} update /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/targetVersion.json --username \$SVN_USER --password \$SVN_PASSWORD --non-interactive
+                            """
+                        }
 
-                    sh "/Users/tmd/Documents/tmd/SouthPark/Jenkins/SyncFileTemp/replace_jenkins.sh ${GAMEENV}"
+                        sh "/Users/tmd/Documents/tmd/SouthPark/Jenkins/SyncFileTemp/replace_jenkins.sh ${GAMEENV}"
+                    } catch (Exception e) {
+                        echo "ReplaceBatchFile stage failed: ${e.getMessage()}"
+                        throw e
+                    }
                 }
             }
         }
@@ -112,54 +134,69 @@ pipeline {
         stage('Move ffsBatch') {
             steps {
                 script{
-                    echo 'Move ffsBatch'
-                     def destinationFolder = ""
-                        if (GAMEENV =='Android') {
-                           destinationFolder= "/Volumes/TMD_PUBLIC/TMD/testing/android/"
-                        } 
-                        else {
-                            destinationFolder= "/Volumes/TMD_PUBLIC/TMD/testing/ios/"
-                        }
-                    def sourceFolder = "/Users/tmd/Documents/tmd/SouthPark/Jenkins/SyncFileTemp/Output/"
-                    sh "cp -r ${sourceFolder}* ${destinationFolder}"
+                    try {
+                        echo 'Move ffsBatch'
+                        def destinationFolder = ""
+                            if (GAMEENV =='Android') {
+                            destinationFolder= "/Volumes/TMD_PUBLIC/TMD/testing/android/"
+                            } 
+                            else {
+                                destinationFolder= "/Volumes/TMD_PUBLIC/TMD/testing/ios/"
+                            }
+                        def sourceFolder = "/Users/tmd/Documents/tmd/SouthPark/Jenkins/SyncFileTemp/Output/"
+                        sh "cp -r ${sourceFolder}* ${destinationFolder}"
+                    } catch (Exception e) {
+                        echo "Move ffsBatch stage failed: ${e.getMessage()}"
+                        throw e
+                    }
                 }
             }
         }
+
+
+
+
 
         stage('Create ffs_batch') {
             steps {
                 script{
-                    dir(PROJ_ANDROID_URL){
-                        // 生成 .ffs_batch 文件内容
-                        def ffsContent = generateFfsBatchContent(params.NEW_VERSION)
-                        writeFile file: 'TMD_testing_new_version_to_4055.ffs_batch', text: ffsContent
+                    try {
+                        dir(PROJ_ANDROID_URL){
+                            def ffsContent = generateFfsBatchContent(params.NEW_VERSION)
+                            writeFile file: 'TMD_testing_new_version_to_4055.ffs_batch', text: ffsContent
 
-                        //複製搬移資料夾的bat到44.63
-                        def destinationFolder = "/Volumes/TMD_PUBLIC/TMD/testing/"
-                        def sourceFolder = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/TMD_testing_new_version_to_4055.ffs_batch"
-                        sh "cp -r ${sourceFolder}* ${destinationFolder}"
+                            def destinationFolder = "/Volumes/TMD_PUBLIC/TMD/testing/"
+                            def sourceFolder = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/TMD_testing_new_version_to_4055.ffs_batch"
+                            sh "cp -r ${sourceFolder}* ${destinationFolder}"
+                        }
+                    } catch (Exception e) {
+                        echo "Failed to create or move ffs_batch file: ${e.getMessage()}"
                     }
                 }
             }
         }
+
 
         stage('Create new Version resources in 4463') {
             steps {
                 script{
-                    //REMOTE
-                    withCredentials([usernamePassword(credentialsId: REMOTE_CREDENTIALS, passwordVariable: 'REMOTE_PASSWORD', usernameVariable: 'REMOTE_USER')]) {
-                        def remote = getRemoteConfig("192.168.44.63", REMOTE_USER, REMOTE_PASSWORD)
+                    try {
+                        withCredentials([usernamePassword(credentialsId: REMOTE_CREDENTIALS, passwordVariable: 'REMOTE_PASSWORD', usernameVariable: 'REMOTE_USER')]) {
+                            def remote = getRemoteConfig("192.168.44.63", REMOTE_USER, REMOTE_PASSWORD)
 
-                        def sourceFolder = GAMEENV == 'iOS' ? "D:\\TMD_PUBLIC\\TMD\\testing\\ios" : "D:\\TMD_PUBLIC\\TMD\\testing\\android"
-                        def newVersionFolder = "D:\\TMD_PUBLIC\\TMD\\testing\\${params.NEW_VERSION}"
+                            def sourceFolder = GAMEENV == 'iOS' ? "D:\\TMD_PUBLIC\\TMD\\testing\\ios" : "D:\\TMD_PUBLIC\\TMD\\testing\\android"
+                            def newVersionFolder = "D:\\TMD_PUBLIC\\TMD\\testing\\${params.NEW_VERSION}"
 
-                        // 检查目标目录是否存在，如果不存在，则创建目录并复制文件
-                        def checkAndCopyCmd = "if not exist \"${newVersionFolder}\" (mkdir \"${newVersionFolder}\" && xcopy /E /I \"${sourceFolder}\\*\" \"${newVersionFolder}\")"
-                        sshCommand remote: remote, command: checkAndCopyCmd
+                            def checkAndCopyCmd = "if not exist \"${newVersionFolder}\" (mkdir \"${newVersionFolder}\" && xcopy /E /I \"${sourceFolder}\\*\" \"${newVersionFolder}\")"
+                            sshCommand remote: remote, command: checkAndCopyCmd
+                        }
+                    } catch (Exception e) {
+                        echo "Failed to create new version resources in 4463: ${e.getMessage()}"
                     }
                 }
             }
         }
+
 
         //44.63 create new version resources base on android or ios, and using free file sync throw the resources to 40.55
         stage('Move testing game resources to 4055') {
@@ -184,21 +221,21 @@ pipeline {
         stage('Good guy will clean environment') {
             steps {
                 script{
-                    // 刪除本地的 TMD_testing_new_version_to_4055.ffs_batch 文件
-                    dir(PROJ_ANDROID_URL){
-                        echo 'rm -f TMD_testing_new_version_to_4055.ffs_batch'
-                        sh "rm -f TMD_testing_new_version_to_4055.ffs_batch"    
-                    }
-
-
-                     //刪除44.63上的1.1.186資料夾
-                    withCredentials([usernamePassword(credentialsId: REMOTE_CREDENTIALS, passwordVariable: 'REMOTE_PASSWORD', usernameVariable: 'REMOTE_USER')]) {
-                        def remote = getRemoteConfig("192.168.44.63", REMOTE_USER, REMOTE_PASSWORD)
-                        try {
-                            sshCommand remote: remote, command: "rmdir /s /q \"D:/TMD_PUBLIC/TMD/testing/${params.NEW_VERSION}\""
-                        } catch (Exception e) {
-                            echo "An error occurred while executing FreeFileSync.exe, but it's being ignored."
+                    try {
+                        dir(PROJ_ANDROID_URL){
+                            echo 'Cleaning up local .ffs_batch file'
+                            sh "rm -f TMD_testing_new_version_to_4055.ffs_batch"
                         }
+                    } catch (Exception e) {
+                        echo "Failed to clean local environment: ${e.getMessage()}"
+                    }
+                    try {
+                        withCredentials([usernamePassword(credentialsId: REMOTE_CREDENTIALS, passwordVariable: 'REMOTE_PASSWORD', usernameVariable: 'REMOTE_USER')]) {
+                            def remote = getRemoteConfig("192.168.44.63", REMOTE_USER, REMOTE_PASSWORD)
+                            sshCommand remote: remote, command: "rmdir /s /q \"D:/TMD_PUBLIC/TMD/testing/${params.NEW_VERSION}\""
+                        }
+                    } catch (Exception e) {
+                        echo "Failed to clean remote environment: ${e.getMessage()}"
                     }
                 }
             }
@@ -290,9 +327,7 @@ def generateFfsBatchContent(String newVersion) {
     </Batch>
 </FreeFileSync>'''
 
-
     template = template.replaceAll("_newVersion_", newVersion)
-    
     
     return template
 }

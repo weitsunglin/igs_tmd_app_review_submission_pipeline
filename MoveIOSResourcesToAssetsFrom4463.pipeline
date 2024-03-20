@@ -15,11 +15,13 @@ pipeline {
     }
 
     stages {
+        
         stage('Pack cocos') {
             steps {
                 script {
-                    dir( PROJ_ANDROID_URL ) {
-                        script { 
+                    dir(PROJ_ANDROID_URL) {
+                        try {
+                            // Define the JSON content for resource copying
                             def jsonContent = """{
                                 "copy_resources": [
                                     {
@@ -39,84 +41,109 @@ pipeline {
                                     }
                                 ]
                             }"""
-                            writeFile file: PROJ_ANDROID_URL+"build-cfg-original.json", text: jsonContent
+                            // Write the JSON content to the specified file
+                            writeFile file: PROJ_ANDROID_URL + "build-cfg-original.json", text: jsonContent
 
+                            // Remove any existing temporary files to clean up before packing
                             sh "rm -rf /Users/tmd/Documents/tmd/SouthPark/ClientCocos/bin/release/tmp*"
+
+                            // Prepare and execute the build shell script
                             BUILD_SHELL_FILE = "Build_Release_Encode.sh" 
-                            sh 'chmod +x /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/Build_Release_Encode.sh'
+                            sh "chmod +x /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/${BUILD_SHELL_FILE}"
                             sh "./${BUILD_SHELL_FILE} release"
+                        } catch (Exception e) {
+                            echo "Error during 'Pack cocos': ${e.getMessage()}"
                         }
                     }
                 }
             }
         }
+
 
         stage('Good Guy cleaning build-cfg-original.json') {
             steps {
                 script {
                     dir(PROJ_ANDROID_URL) {
-                        script {
+                        try {
                             def svnRevertCmd = "${SVN_INSTALL_PATH} revert ${PROJ_ANDROID_URL + "build-cfg-original.json"}"
                             sh(svnRevertCmd)
+                        } catch (Exception e) {
+                            echo "Error in 'Good Guy cleaning build-cfg-original.json': ${e.getMessage()}"
                         }
                     }
                 }
             }
         }
 
+
         stage('Move cocos Resource to IOS Assets') {
             steps {
                 script {
-                    script {
+                    try {
                         sh "rm -rf /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/*"
-                        sh  "cp -r /Users/tmd/Documents/tmd/SouthPark/ClientCocos/bin/release/tmp/cocos /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/"
+                        sh "cp -r /Users/tmd/Documents/tmd/SouthPark/ClientCocos/bin/release/tmp/cocos /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/"
                         sh "chmod +x /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/cocos"
+                    } catch (Exception e) {
+                        echo "Error in 'Move cocos Resource to IOS Assets': ${e.getMessage()}"
                     }
                 }
             }
         }
+
 
 
         stage('Move Inanna Resource to Ios Assets from 4463') {
             steps {
                 script {
-                    def luaSource = '/Volumes/TMD_PUBLIC/TMD/testing/ios/Inanna/InannaLua'
-                    def resourcesSource = '/Volumes/TMD_PUBLIC/TMD/testing/ios/Inanna/InannaResource'
-                    def targetDirectory = '/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/'
+                    try {
+                        def luaSource = '/Volumes/TMD_PUBLIC/TMD/testing/ios/Inanna/InannaLua'
+                        def resourcesSource = '/Volumes/TMD_PUBLIC/TMD/testing/ios/Inanna/InannaResource'
+                        def targetDirectory = '/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/'
 
-                    sh "cp -R ${luaSource} ${targetDirectory}"
-                    sh "cp -R ${resourcesSource} ${targetDirectory}"
+                        sh "cp -R ${luaSource} ${targetDirectory}"
+                        sh "cp -R ${resourcesSource} ${targetDirectory}"
 
-                    decompressZipFiles("/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/InannaLua")
-                    decompressZipFiles("/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/InannaResource")
+                        // Assuming decompressZipFiles is a custom function you've defined to handle ZIP file decompression
+                        decompressZipFiles("/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/InannaLua")
+                        decompressZipFiles("/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/InannaResource")
+                    } catch (Exception e) {
+                        echo "Error in 'Move Inanna Resource to Ios Assets from 4463': ${e.getMessage()}"
+                    }
                 }
             }
         }
 
+
         stage('Move Basic Game Resource to IOS Assets from 4463') {
             steps {
                 script {
-                    def resources = BASIC_GAME.split(" ")
-                    resources.each { resourceName ->
-                        def sourceSubDir = resourceName
-                        def sourcePath = "${env.TMD_IOS_SOURCE}/${sourceSubDir}"
-                        def matchingFolders = sh(script: "find ${sourcePath} -type d \\( -name '*Lua' -o -name '*Resources' \\)", returnStdout: true).trim().split("\n")
+                    try {
+                        def resources = BASIC_GAME.split(" ")
+                        resources.each { resourceName ->
+                            def sourceSubDir = resourceName
+                            def sourcePath = "${env.TMD_IOS_SOURCE}/${sourceSubDir}"
+                            def matchingFolders = sh(script: "find ${sourcePath} -type d \\( -name '*Lua' -o -name '*Resources' \\)", returnStdout: true).trim().split("\n")
 
-                        matchingFolders.each { folderPath ->
-                            def destinationPath = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/"
-                            sh "cp -R ${folderPath} ${destinationPath}"
+                            matchingFolders.each { folderPath ->
+                                def destinationPath = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/"
+                                sh "cp -R ${folderPath} ${destinationPath}"
+                            }
+
+                            def path = ""
+                            if (sourceSubDir == 'ManganDahen') {
+                                path = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/MDLua"
+                            } else if (sourceSubDir == 'XXX') {
+                                path = ""
+                            } else {
+                                path = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/${sourceSubDir}Lua"
+                            }
+
+                            if (!path.isEmpty()) {
+                                decompressZipFiles(path)
+                            }
                         }
-
-                        def path = ""
-                        if (sourceSubDir == 'ManganDahen') {
-                            path = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/MDLua"
-                        } else if (sourceSubDir == 'XXX') {
-                            path = ""
-                        } else {
-                            path = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/${sourceSubDir}Lua"
-                        }
-
-                        decompressZipFiles(path)
+                    } catch (Exception e) {
+                        echo "Error in 'Move Basic Game Resource to IOS Assets from 4463': ${e.getMessage()}"
                     }
                 }
             }
@@ -125,59 +152,79 @@ pipeline {
         stage('Move Review Game Resource to IOS Assets from 4463') {
             steps {
                 script {
-                    def resources = params.IOS_RESOURCES.split(" ")
-                    resources.each { resourceName ->
-                        def sourceSubDir = resourceName
-                        def sourcePath = "${env.TMD_IOS_SOURCE}/${sourceSubDir}"
-                        def matchingFolders = sh(script: "find ${sourcePath} -type d \\( -name '*Lua' -o -name '*Resources' \\)", returnStdout: true).trim().split("\n")
+                    try {
+                        def resources = params.IOS_RESOURCES.split(" ")
+                        resources.each { resourceName ->
+                            def sourceSubDir = resourceName
+                            def sourcePath = "${env.TMD_IOS_SOURCE}/${sourceSubDir}"
+                            def matchingFolders = sh(script: "find ${sourcePath} -type d \\( -name '*Lua' -o -name '*Resources' \\)", returnStdout: true).trim().split("\n")
 
-                        matchingFolders.each { folderPath ->
-                            def destinationPath = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/"
-                            sh "cp -R ${folderPath} ${destinationPath}"
+                            matchingFolders.each { folderPath ->
+                                def destinationPath = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/"
+                                sh "cp -R ${folderPath} ${destinationPath}"
+                            }
+
+                            def path = ""
+                            if (sourceSubDir == 'XXX') {
+                                path = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/XXXLua"
+                            } else {
+                                path = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/${sourceSubDir}Lua"
+                            }
+
+                            if (!path.isEmpty()) {
+                                decompressZipFiles(path)
+                            }
                         }
-
-                        def path = ""
-
-                        if (sourceSubDir == 'XXX') {
-                            path = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/XXXLua"
-                        }  else {
-                            path = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/${sourceSubDir}Lua"
-                        }
-                        decompressZipFiles(path)
+                    } catch (Exception e) {
+                        echo "Error in 'Move Review Game Resource to IOS Assets from 4463': ${e.getMessage()}"
                     }
                 }
             }
         }
 
+
         stage('Good Guy Clean Up') {
             steps {
                 script {
-                    def targetDirectory = '/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/'
-                    sh """ find ${targetDirectory} -type f -name '*.zip' -exec rm {} \\;  """
+                    try {
+                        def targetDirectory = '/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/'
+                        sh "find ${targetDirectory} -type f -name '*.zip' -exec rm {} \\;"
+                    } catch (Exception e) {
+                        echo "Error during 'Good Guy Clean Up': ${e.getMessage()}"
+                    }
                 }
             }
         }
+
 
         stage('CheckOut WebEnviornment') {
             steps {
                 script {
                     withCredentials([usernamePassword(credentialsId: SVM_CREDENTIALS_ID, usernameVariable: 'SVN_USER', passwordVariable: 'SVN_PASSWORD')]) {
-                        sh "chmod +x /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/InannaLua"
-                        sh "mkdir -p /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/InannaLua"
-                        sh "${SVN_INSTALL_PATH} export http://192.168.1.183/svn/Inanna/trunk/InannaLua/WebEnvironment.xml --depth files /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/InannaLua --username ${SVN_USER} --password ${SVN_PASSWORD}"
+                        try {
+                            sh "chmod +x /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/InannaLua"
+                            sh "mkdir -p /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/InannaLua"
+                            sh "${SVN_INSTALL_PATH} export http://192.168.1.183/svn/Inanna/trunk/InannaLua/WebEnvironment.xml --depth files /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/InannaLua --username ${SVN_USER} --password ${SVN_PASSWORD}"
+                        } catch (Exception e) {
+                            echo "Error during 'CheckOut WebEnvironment': ${e.getMessage()}"
+                        }
                     }
                 }
             }
         }
 
+
         stage('Give permission') {
             steps {
                 script {
-                   sh "find /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/ -type f -exec chmod 666 {} \\;"
+                    try {
+                        sh "find /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/ -type f -exec chmod 666 {} \\;"
+                    } catch (Exception e) {
+                        echo "Error during 'Give permission': ${e.getMessage()}"
+                    }
                 }
             }
         }
-        
     }
 
     post {

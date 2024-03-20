@@ -12,40 +12,51 @@ pipeline {
     }
 
     stages {
+        
         stage('Create Folder and Throw IOS IPA') {
             steps {
                 script {
-                    VERSION_NAME_SHELL = "${params.VERSION_NAME}"
+                    try {
+                        VERSION_NAME_SHELL = "${params.VERSION_NAME}"
 
-                    sh """
-                    SOURCE_FILE1="/Users/tmd/Desktop/testing_app_will_go_gcp/androidApk.apk"
-                    SOURCE_FILE2="/Users/tmd/Desktop/testing_app_will_go_gcp/androidAllApk.apk"
-                    
-                    TARGET_DIR="/Volumes/webGame/tmdInstall/testing/${VERSION_NAME_SHELL}"
+                        sh """
+                        SOURCE_FILE1="/Users/tmd/Desktop/testing_app_will_go_gcp/androidApk.apk"
+                        SOURCE_FILE2="/Users/tmd/Desktop/testing_app_will_go_gcp/androidAllApk.apk"
+                        
+                        TARGET_DIR="/Volumes/webGame/tmdInstall/testing/${VERSION_NAME_SHELL}"
 
-                    # Ensure the target directory exists
-                    mkdir -p "\${TARGET_DIR}"
+                        # Ensure the target directory exists
+                        mkdir -p "\${TARGET_DIR}"
 
-                    # Copy the file
-                    cp "\${SOURCE_FILE1}" "\${TARGET_DIR}"
-                    cp "\${SOURCE_FILE2}" "\${TARGET_DIR}"
-                    """
-                }
-            }
-        }
-
-        stage('Execute Batch File') {
-            steps {
-                script {
-                    withCredentials([usernamePassword(credentialsId: REMOTE_CREDENTIALS, passwordVariable: 'PASSWORD', usernameVariable: 'USER')]) {
-                        def remote = getRemoteConfig('192.168.44.102', USER, PASSWORD)
-                        def command = "D:/webGame/tmdInstall/IPA_GCP_rsyncAndPurge_jenkins.bat"
-                        sshCommand remote: remote, command: command
+                        # Copy the file
+                        cp "\${SOURCE_FILE1}" "\${TARGET_DIR}"
+                        cp "\${SOURCE_FILE2}" "\${TARGET_DIR}"
+                        """
+                    } catch (Exception e) {
+                        echo "Create Folder and Throw IOS IPA with error: ${e.message}"
+                        throw e
                     }
                 }
             }
         }
 
+
+        stage('Execute Batch File') {
+            steps {
+                script {
+                    try {
+                        withCredentials([usernamePassword(credentialsId: REMOTE_CREDENTIALS, passwordVariable: 'PASSWORD', usernameVariable: 'USER')]) {
+                            def remote = getRemoteConfig('192.168.44.102', USER, PASSWORD)
+                            def command = "D:/webGame/tmdInstall/IPA_GCP_rsyncAndPurge_jenkins.bat"
+                            sshCommand remote: remote, command: command
+                        }
+                    } catch (Exception e) {
+                        echo "Execute Batch File with error: ${e.message}"
+                        throw e
+                    }
+                }
+            }
+        }
     }
 
     post {
