@@ -4,7 +4,7 @@ pipeline {
     parameters {
         string(name: 'BUILDER_NAME', defaultValue: 'weitsunglin', description: '你的名字')
         choice(name: 'ANDROID_VERSION', choices: ['商店版', '官方版'], description: '底層版本')
-        choice(name: 'CPU_COUNT', choices: ['6', '8' , '10'], description: 'Xcode拉轉用,目前送審mac有12顆核心')
+        choice(name: 'CPU_COUNT', choices: ['6', '8' , '10'], description: 'mac拉轉用,目前送審mac有12顆核心')
     }
 
     environment {
