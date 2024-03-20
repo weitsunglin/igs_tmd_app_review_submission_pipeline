@@ -7,7 +7,7 @@ pipeline {
         choice(name: 'NDK_TYPE', choices: ['store', 'offical'], description: '底層類型:商店版/官網版')
         choice(name: 'BUILD_ENV', choices: ['production'], description: '編譯環境:外部')
         string(name: 'VERSION_NAME', defaultValue: '1.1.xxx', description: '版本號:安卓單數1.1.175')
-        string(name: 'VERSION_CODE', defaultValue: '1000249', description: 'versionCode上傳過PLAYSTORE商店重編要再加一')
+        string(name: 'VERSION_CODE', defaultValue: '1000xxx', description: 'versionCode上傳過PLAYSTORE商店重編要再加一')
     }
 
     environment {
@@ -24,6 +24,9 @@ pipeline {
                 script {
                     if (params.VERSION_NAME == '1.1.xxx') {
                         error("The VERSION_NAME parameter is set to '1.1.xxx', which is a placeholder and not a valid version name. Pipeline execution is terminated to prevent build configuration errors.")
+                    }
+                    if (params.VERSION_CODE == '1000xxx') {
+                        error("The VERSION_NAME parameter is set to '1000xxx', which is a placeholder and not a valid version code. Pipeline execution is terminated to prevent build configuration errors.")
                     }
                 }
             }
