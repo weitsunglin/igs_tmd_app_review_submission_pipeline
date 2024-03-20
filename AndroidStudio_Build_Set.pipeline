@@ -61,10 +61,9 @@ pipeline {
     post {
         always {
             emailext (
-                to: "${params.DIRECTOR}",
                 subject: "${currentBuild.currentResult}",
                 body: "${currentBuild.currentResult}, AndroidStudio_Build_Set",
-                attachmentsPattern: '/Users/tmd/Desktop/production_android_app/store-release.apk'
+                to: "${params.DIRECTOR}"
             )
         }
     }
