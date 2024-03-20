@@ -141,7 +141,7 @@ pipeline {
 
                         def appSource = ""
                         def destDir = "/Users/tmd/Desktop/production_andrid_app"
-                        def apkName = "android-release-${params.NDK_TYPE}.apk"
+                        def apkName = "android-release-${params.NDK_TYPE}.${params.BUILD_TYPE}"
                         def finalName = ""
 
 
