@@ -138,23 +138,36 @@ pipeline {
             steps {
                 script {
                     try {
-                        def apkSource = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/build/outputs/apk/release/proj.android-release.apk"
-                        def destDir = "/Users/tmd/Desktop/testing_app_will_go_gcp"
-                        def apkName = "android-release-${params.NDK_TYPE}.apk"
-                        def finalName = "${params.BUILD_ENV}.${apkName}"
 
-                        if (params.NDK_TYPE == 'store') {
-                            finalName = 'androidApk.apk'
+                        def appSource = ""
+                        def destDir = "/Users/tmd/Desktop/production_andrid_app"
+                        def apkName = "android-release-${params.NDK_TYPE}.apk"
+                        def finalName = ""
+
+
+                        if (params.BUILD_TYPE == 'aab') {
+                           appSource = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/build/outputs/bundle/release/proj.android-release.aab"
                         } else {
-                            finalName = 'androidAllApk.apk'
+                           appSource = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/build/outputs/apk/release/proj.android-release.apk"
+                        }
+
+                        if (params.NDK_TYPE == 'store' && params.BUILD_TYPE == 'aab') {
+                            finalName = 'store-release.aab'
+                        } else if( params.NDK_TYPE == 'offical' && params.BUILD_TYPE == 'aab' ) {
+                            finalName = 'official-release.aab'
+                        } else if( params.NDK_TYPE == 'store' && params.BUILD_TYPE == 'apk' ) {
+                            finalName = 'store-release.apk'
+                        } else if( params.NDK_TYPE == 'offical' && params.BUILD_TYPE == 'apk' ) {
+                            finalName = 'official-release.apk'
                         }
 
                         sh "mkdir -p '${destDir}'"
                         
                         sh """
-                        cp '${apkSource}' '${destDir}/${apkName}'
+                        cp '${appSource}' '${destDir}/${apkName}'
                         mv '${destDir}/${apkName}' '${destDir}/${finalName}'
                         """
+
                     } catch (Exception e) {
                         echo "Failed in Change app Name and Throw to desktop: ${e.getMessage()}"
                     }
