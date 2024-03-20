@@ -140,7 +140,7 @@ pipeline {
                     try {
 
                     def appSource = ""
-                    def appDirection = "/Users/tmd/Desktop/production_andrid_app/"
+                    def appDirection = "/Users/tmd/Desktop/production_android_app/"
 
                     sh "mkdir -p '${appDirection}'"
 
