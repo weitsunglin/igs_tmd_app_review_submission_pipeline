@@ -76,8 +76,6 @@ pipeline {
             }
         }
 
-        
-
         stage('Fix Resources Name and Move to ndk_temps') {
             steps {
                 script {
