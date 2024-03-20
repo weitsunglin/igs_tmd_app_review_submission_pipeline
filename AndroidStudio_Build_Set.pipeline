@@ -1,0 +1,71 @@
+pipeline {
+    agent any
+    
+    parameters {
+        string(name: 'BUILDER_NAME', defaultValue: 'weitsunglin', description: 'Your Name')
+        choice(name: 'Director', choices: ['youhewang@igs.com.tw', 'taiminglu@igs.com.tw','mikeli@igs.com.tw','yihsinliou@igs.com.tw','chaoenchou@igs.com.tw','chenhongluo@igs.com.tw','jiaweiwu@igs.com.tw','poyanchen@igs.com.tw'], description: '選擇編導信箱')
+        string(name: 'VERSION_NAME', defaultValue: '1.1.xxx', description: 'Version Name: Android version 1.1.175')
+        string(name: 'VERSION_CODE', defaultValue: '1000xxx', description: 'Version Code: Increment by one when uploading to PLAYSTORE')
+    }
+    
+    stages {
+        stage('產商店aab') {
+            steps {
+                script {
+                    build job: 'Build android tmd app',
+                          parameters: [
+                              string(name: 'BUILDER_NAME', value: params.BUILDER_NAME),
+                              choice(name: 'BUILD_TYPE', value: 'aab'),
+                              choice(name: 'NDK_TYPE', value: 'store'),
+                              choice(name: 'BUILD_ENV', value: 'production'),
+                              string(name: 'VERSION_NAME', value: params.VERSION_NAME),
+                              string(name: 'VERSION_CODE', value: params.VERSION_CODE)
+                          ]
+                }
+            }
+        }
+        
+        stage('產商店apk') {
+            steps {
+                script {
+                    build job: 'Build android tmd app',
+                          parameters: [
+                              string(name: 'BUILDER_NAME', value: params.BUILDER_NAME),
+                              choice(name: 'BUILD_TYPE', value: 'apk'),
+                              choice(name: 'NDK_TYPE', value: 'store'),
+                              choice(name: 'BUILD_ENV', value: 'production'),
+                              string(name: 'VERSION_NAME', value: params.VERSION_NAME),
+                              string(name: 'VERSION_CODE', value: params.VERSION_CODE)
+                          ]
+                }
+            }
+        }
+        
+        stage('產官方apk') {
+            steps {
+                script {
+                    build job: 'Build android tmd app',
+                          parameters: [
+                              string(name: 'BUILDER_NAME', value: params.BUILDER_NAME),
+                              choice(name: 'BUILD_TYPE', value: 'apk'),
+                              choice(name: 'NDK_TYPE', value: 'offical'),
+                              choice(name: 'BUILD_ENV', value: 'production'),
+                              string(name: 'VERSION_NAME', value: params.VERSION_NAME),
+                              string(name: 'VERSION_CODE', value: params.VERSION_CODE)
+                          ]
+                }
+            }
+        }
+    }
+    
+    post {
+        always {
+             emailext (
+                to: "${Director}@igs.com.tw",
+                subject: "${currentBuild.currentResult}",
+                body: "${currentBuild.currentResult}, AndroidStudio_Build_Set",
+                attachmentsPattern: '/Users/tmd/Desktop/production_android_app/store-release.apk, /Users/tmd/Desktop/production_android_app/store-release.aab, /Users/tmd/Desktop/production_android_app/offical-release.apk'
+            )
+        }
+    }
+}

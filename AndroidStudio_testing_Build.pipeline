@@ -147,9 +147,9 @@ pipeline {
                         }
 
                         sh "mkdir -p '${destDir}'"
-                        
                         sh "cp '${apkSource}' '${destDir}/${apkName}'"
                         sh "mv '${destDir}/${apkName}' '${destDir}/${finalName}'"
+                        
                     } catch (Exception e) {
                         echo "Error in Change app Name and Throw to desktop stage: ${e.getMessage()}"
                     }
