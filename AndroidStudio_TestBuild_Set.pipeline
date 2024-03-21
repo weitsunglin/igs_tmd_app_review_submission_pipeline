@@ -42,11 +42,18 @@ pipeline {
     }
     
     post {
-        always {
-             emailext (
-                to: "${BUILDER_NAME}@igs.com.tw",
-                subject: "${currentBuild.currentResult}，輸出路徑在/Users/tmd/Desktop/production_android_app/",
-                body: "${currentBuild.currentResult}, 建構滿貫安卓app",
+        success {
+            emailext(
+                subject: "android編譯app成功",
+                body: "android編譯底層成功，/Users/tmd/Desktop/production_android_app/",
+                to: "${params.BUILDER_NAME}@igs.com.tw"
+            )
+        }
+        failure {
+            emailext(
+                subject: "android編譯app失敗",
+                body: "android編譯底層失敗",
+                to:  "${params.BUILDER_NAME}@igs.com.tw"
             )
         }
     }

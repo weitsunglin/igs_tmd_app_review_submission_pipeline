@@ -37,8 +37,8 @@ pipeline {
     post {
         success {
             emailext(
-                subject: "ndk編譯底層成功，輸出路徑: /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/ndk_temps'",
-                body: "ndk編譯底層成功",
+                subject: "ndk編譯底層成功",
+                body: "ndk編譯底層成功，/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/ndk_temps",
                 to: "${params.BUILDER_NAME}@igs.com.tw"
             )
         }
