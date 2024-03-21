@@ -13,14 +13,14 @@ pipeline {
             steps {
                 script {
                     build job: 'Build android tmd app',
-                          parameters: [
-                              string(name: 'BUILDER_NAME', value: params.BUILDER_NAME),
-                              string(name: 'BUILD_TYPE', value: 'aab'),
-                              string(name: 'NDK_TYPE', value: 'store'),
-                              string(name: 'BUILD_ENV', value: 'production'),
-                              string(name: 'VERSION_NAME', value: params.VERSION_NAME),
-                              string(name: 'VERSION_CODE', value: params.VERSION_CODE)
-                          ]
+                    parameters: [
+                        string(name: 'BUILDER_NAME', value: params.BUILDER_NAME),
+                        string(name: 'BUILD_TYPE', value: 'aab'),
+                        string(name: 'NDK_TYPE', value: 'store'),
+                        string(name: 'BUILD_ENV', value: 'production'),
+                        string(name: 'VERSION_NAME', value: params.VERSION_NAME),
+                        string(name: 'VERSION_CODE', value: params.VERSION_CODE)
+                    ]
                 }
             }
         }
@@ -29,14 +29,14 @@ pipeline {
             steps {
                 script {
                     build job: 'Build android tmd app',
-                          parameters: [
-                              string(name: 'BUILDER_NAME', value: params.BUILDER_NAME),
-                              string(name: 'BUILD_TYPE', value: 'apk'),
-                              string(name: 'NDK_TYPE', value: 'store'),
-                              string(name: 'BUILD_ENV', value: 'production'),
-                              string(name: 'VERSION_NAME', value: params.VERSION_NAME),
-                              string(name: 'VERSION_CODE', value: params.VERSION_CODE)
-                          ]
+                    parameters: [
+                        string(name: 'BUILDER_NAME', value: params.BUILDER_NAME),
+                        string(name: 'BUILD_TYPE', value: 'apk'),
+                        string(name: 'NDK_TYPE', value: 'store'),
+                        string(name: 'BUILD_ENV', value: 'production'),
+                        string(name: 'VERSION_NAME', value: params.VERSION_NAME),
+                        string(name: 'VERSION_CODE', value: params.VERSION_CODE)
+                    ]
                 }
             }
         }
@@ -45,14 +45,14 @@ pipeline {
             steps {
                 script {
                     build job: 'Build android tmd app',
-                          parameters: [
-                              string(name: 'BUILDER_NAME', value: params.BUILDER_NAME),
-                              string(name: 'BUILD_TYPE', value: 'apk'),
-                              string(name: 'NDK_TYPE', value: 'offical'),
-                              string(name: 'BUILD_ENV', value: 'production'),
-                              string(name: 'VERSION_NAME', value: params.VERSION_NAME),
-                              string(name: 'VERSION_CODE', value: params.VERSION_CODE)
-                          ]
+                    parameters: [
+                        string(name: 'BUILDER_NAME', value: params.BUILDER_NAME),
+                        string(name: 'BUILD_TYPE', value: 'apk'),
+                        string(name: 'NDK_TYPE', value: 'offical'),
+                        string(name: 'BUILD_ENV', value: 'production'),
+                        string(name: 'VERSION_NAME', value: params.VERSION_NAME),
+                        string(name: 'VERSION_CODE', value: params.VERSION_CODE)
+                    ]
                 }
             }
         }
@@ -64,7 +64,7 @@ pipeline {
                 subject: "${currentBuild.currentResult}",
                 body: "${currentBuild.currentResult}, AndroidStudio_Build_Set",
                 to: "${params.DIRECTOR}",
-                attachmentsPattern: '/Users/tmd/Desktop/production_android_app/*.apk, /Users/tmd/Desktop/production_android_app/*.aab'
+                attachmentsPattern: '/Users/tmd/Desktop/production_android_app/store-release.apk'
             )
         }
     }
