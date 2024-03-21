@@ -59,17 +59,19 @@ pipeline {
     }
     
     post {
-        always {
-            emailext (
-                subject: "${currentBuild.currentResult}",
-                body: "${currentBuild.currentResult}, AndroidStudio_Build_Set",
-                to: "${params.DIRECTOR}",
-                attachments: [
-                    '/Users/tmd/Desktop/production_android_app/store-release.apk',
-                    '/Users/tmd/Desktop/production_android_app/store-release.aab',
-                    '/Users/tmd/Desktop/production_android_app/offical-release.apk'
-                ]
-            )
-        }
+    always {
+        emailext (  // Assuming you installed the Email Extension Plugin
+        subject: "${currentBuild.currentResult}",
+        body: "${currentBuild.currentResult}, AndroidStudio_Build_Set",
+        to: "${params.DIRECTOR}",
+        // Check plugin documentation for the correct parameter name for attachments
+        attachFiles: [  // This might be the correct parameter name
+            '/Users/tmd/Desktop/production_android_app/store-release.apk',
+            '/Users/tmd/Desktop/production_android_app/store-release.aab',
+            '/Users/tmd/Desktop/production_android_app/offical-release.apk'
+        ]
+        )
     }
+    }
+
 }
