@@ -64,7 +64,7 @@ pipeline {
             subject: "${currentBuild.currentResult}",
             body: "${currentBuild.currentResult}, AndroidStudio_Build_Set",
             to: "${params.DIRECTOR}",
-            attachmentsPattern: '/Users/tmd/Desktop/production_android_app/*.apk /Users/tmd/Desktop/production_android_app/*.aab'
+            attachmentsPattern: '/Users/tmd/Desktop/production_android_app/*.{apk,aab}'
             )
         }
     }
