@@ -45,8 +45,8 @@ pipeline {
         always {
              emailext (
                 to: "${BUILDER_NAME}@igs.com.tw",
-                subject: "${currentBuild.currentResult}",
-                body: "${currentBuild.currentResult}, AndroidStudio_TestBuild_Set",
+                subject: "${currentBuild.currentResult}，輸出路徑在/Users/tmd/Desktop/production_android_app/",
+                body: "${currentBuild.currentResult}, 建構滿貫安卓app",
             )
         }
     }
