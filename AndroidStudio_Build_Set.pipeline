@@ -14,12 +14,12 @@ pipeline {
                 script {
                     build job: 'Build android tmd app',
                           parameters: [
-                              [$class: 'StringParameterValue', name: 'BUILDER_NAME', value: params.BUILDER_NAME],
-                              [$class: 'ChoiceParameterValue', name: 'BUILD_TYPE', value: 'aab'],
-                              [$class: 'ChoiceParameterValue', name: 'NDK_TYPE', value: 'store'],
-                              [$class: 'ChoiceParameterValue', name: 'BUILD_ENV', value: 'production'],
-                              [$class: 'StringParameterValue', name: 'VERSION_NAME', value: params.VERSION_NAME],
-                              [$class: 'StringParameterValue', name: 'VERSION_CODE', value: params.VERSION_CODE]
+                              string(name: 'BUILDER_NAME', value: params.BUILDER_NAME),
+                              choice(name: 'BUILD_TYPE', value: 'aab'),
+                              choice(name: 'NDK_TYPE', value: 'store'),
+                              choice(name: 'BUILD_ENV', value: 'production'),
+                              string(name: 'VERSION_NAME', value: params.VERSION_NAME),
+                              string(name: 'VERSION_CODE', value: params.VERSION_CODE)
                           ]
                 }
             }
@@ -30,12 +30,12 @@ pipeline {
                 script {
                     build job: 'Build android tmd app',
                           parameters: [
-                              [$class: 'StringParameterValue', name: 'BUILDER_NAME', value: params.BUILDER_NAME],
-                              [$class: 'ChoiceParameterValue', name: 'BUILD_TYPE', value: 'apk'],
-                              [$class: 'ChoiceParameterValue', name: 'NDK_TYPE', value: 'store'],
-                              [$class: 'ChoiceParameterValue', name: 'BUILD_ENV', value: 'production'],
-                              [$class: 'StringParameterValue', name: 'VERSION_NAME', value: params.VERSION_NAME],
-                              [$class: 'StringParameterValue', name: 'VERSION_CODE', value: params.VERSION_CODE]
+                              string(name: 'BUILDER_NAME', value: params.BUILDER_NAME),
+                              choice(name: 'BUILD_TYPE', value: 'apk'),
+                              choice(name: 'NDK_TYPE', value: 'store'),
+                              choice(name: 'BUILD_ENV', value: 'production'),
+                              string(name: 'VERSION_NAME', value: params.VERSION_NAME),
+                              string(name: 'VERSION_CODE', value: params.VERSION_CODE)
                           ]
                 }
             }
@@ -46,12 +46,12 @@ pipeline {
                 script {
                     build job: 'Build android tmd app',
                           parameters: [
-                              [$class: 'StringParameterValue', name: 'BUILDER_NAME', value: params.BUILDER_NAME],
-                              [$class: 'ChoiceParameterValue', name: 'BUILD_TYPE', value: 'apk'],
-                              [$class: 'ChoiceParameterValue', name: 'NDK_TYPE', value: 'offical'],
-                              [$class: 'ChoiceParameterValue', name: 'BUILD_ENV', value: 'production'],
-                              [$class: 'StringParameterValue', name: 'VERSION_NAME', value: params.VERSION_NAME],
-                              [$class: 'StringParameterValue', name: 'VERSION_CODE', value: params.VERSION_CODE]
+                              string(name: 'BUILDER_NAME', value: params.BUILDER_NAME),
+                              choice(name: 'BUILD_TYPE', value: 'apk'),
+                              choice(name: 'NDK_TYPE', value: 'offical'),
+                              choice(name: 'BUILD_ENV', value: 'production'),
+                              string(name: 'VERSION_NAME', value: params.VERSION_NAME),
+                              string(name: 'VERSION_CODE', value: params.VERSION_CODE)
                           ]
                 }
             }
