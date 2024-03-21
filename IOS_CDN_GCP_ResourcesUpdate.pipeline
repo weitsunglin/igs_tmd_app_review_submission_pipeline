@@ -32,7 +32,6 @@ pipeline {
             }
         }
 
-
         stage('GCP更新Resource') {
             steps {
                 script {
@@ -49,7 +48,6 @@ pipeline {
             }
         }
 
-
         stage('GCP清除快取資源') {
             steps {
                 script {
@@ -65,7 +63,6 @@ pipeline {
                 }
             }
         }
-
 
         stage('CDN更新Resource') {
             steps {
@@ -100,7 +97,6 @@ pipeline {
             }
         }
 
-
         stage('GCP清除快取資源2') {
             steps {
                 script {
@@ -116,7 +112,6 @@ pipeline {
                 }
             }
         }
-
 
         stage('CDN更新Version2') {
             steps {

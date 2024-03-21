@@ -84,7 +84,6 @@ pipeline {
             }
         }
 
-
         stage('Modify build-cfg-original.json') {
             steps {      
                 script { 
@@ -180,7 +179,6 @@ pipeline {
             }
         }
 
-
         stage('Packing') {
             steps {
                 dir(PROJ_ANDROID_URL) {
@@ -195,7 +193,6 @@ pipeline {
                 }
             }
         }
-
 
         stage('Clean Build CFG Original') {
             steps {

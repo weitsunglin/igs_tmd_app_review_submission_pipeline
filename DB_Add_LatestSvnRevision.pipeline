@@ -50,7 +50,6 @@ pipeline {
                 }
             }
         }
-
         
         stage('Insert DB LatestSvnRevision') {
             steps {

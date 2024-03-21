@@ -66,8 +66,6 @@ pipeline {
             }
         }
 
-
-
         stage('Setting project') {
             steps {
                 script {
@@ -88,7 +86,6 @@ pipeline {
             }
         }
 
-
         stage('Setting environment') {
             steps {
                 script {
@@ -103,7 +100,6 @@ pipeline {
                 }
             }
         }
-
 
         stage('android studio build') {
             steps {

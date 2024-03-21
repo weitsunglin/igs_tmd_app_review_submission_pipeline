@@ -86,7 +86,6 @@ pipeline {
             }
         }
 
-
         stage('SVN commit target version') {
             steps {
                 script{
@@ -152,10 +151,6 @@ pipeline {
                 }
             }
         }
-
-
-
-
 
         stage('Create ffs_batch') {
             steps {
