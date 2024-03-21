@@ -64,6 +64,11 @@ pipeline {
                 subject: "${currentBuild.currentResult}",
                 body: "${currentBuild.currentResult}, AndroidStudio_Build_Set",
                 to: "${params.DIRECTOR}"
+                attachments: [
+                    '/Users/tmd/Desktop/production_android_app/store-release.apk',
+                    '/Users/tmd/Desktop/production_android_app/store-release.aab',
+                    '/Users/tmd/Desktop/production_android_app/offical-release.apk'
+                ]
             )
         }
     }
