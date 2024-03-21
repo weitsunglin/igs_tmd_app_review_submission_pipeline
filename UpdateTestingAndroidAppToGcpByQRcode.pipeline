@@ -11,8 +11,7 @@ pipeline {
         REMOTE_CREDENTIALS = 'remote44102_login'
     }
 
-    stages {
-        
+    stages { 
         stage('Create Folder and Throw IOS IPA') {
             steps {
                 script {
@@ -39,7 +38,6 @@ pipeline {
                 }
             }
         }
-
 
         stage('Execute Batch File') {
             steps {

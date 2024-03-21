@@ -59,7 +59,6 @@ pipeline {
             }
         }
 
-
         stage('Good Guy cleaning build-cfg-original.json') {
             steps {
                 script {
@@ -75,7 +74,6 @@ pipeline {
             }
         }
 
-
         stage('Move cocos Resource to IOS Assets') {
             steps {
                 script {
@@ -89,8 +87,6 @@ pipeline {
                 }
             }
         }
-
-
 
         stage('Move Inanna Resource to Ios Assets from 4463') {
             steps {

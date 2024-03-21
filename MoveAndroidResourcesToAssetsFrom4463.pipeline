@@ -74,7 +74,6 @@ pipeline {
             }
         }
 
-
         stage('Move cocos to Android Assets') {
             steps {
                 script {
@@ -87,7 +86,6 @@ pipeline {
                 }
             }
         }
-
 
         stage('Move PackingData to Android Assets from 4463') {
             steps {
@@ -131,7 +129,6 @@ pipeline {
             }
         }
 
-
         stage('Clean Up') {
             steps {
                 script {
@@ -162,7 +159,6 @@ pipeline {
             }
         }
 
-
         stage('Give permission') {
             steps {
                 script {
@@ -174,7 +170,6 @@ pipeline {
                 }
             }
         }
-        
     }
 
     post {

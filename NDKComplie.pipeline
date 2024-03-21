@@ -12,7 +12,6 @@ pipeline {
     }
 
     stages {
-
         stage('Delete Resources') {
             steps {
                 script {
@@ -60,7 +59,6 @@ pipeline {
             }
         }
 
-
         stage('Build NDK') {
             steps {
                 script {
@@ -107,7 +105,6 @@ pipeline {
                 }
             }
         }
-
     }
 
     post {
