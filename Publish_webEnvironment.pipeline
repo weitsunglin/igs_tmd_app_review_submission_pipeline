@@ -22,8 +22,6 @@ pipeline {
                             def newContent = "<type>${params.ENVIRONMENT_TYPE}</type>"
                             def command = "powershell -Command \"(Get-Content ${filePath}).replace('${oldContent}', '${newContent}') | Set-Content -Encoding utf8 ${filePath}\""
                             sshCommand remote: remote, command: command
-                            //中斷點
-                            input "Fix WebEnvironment stage is complete. Proceed?"
                         } catch (Exception e) {
                             echo "An error occurred: ${e.getMessage()}"
                             throw e
