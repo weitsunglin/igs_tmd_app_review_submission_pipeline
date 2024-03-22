@@ -20,7 +20,7 @@ pipeline {
                             def filePath = 'D:\\webGame\\Game\\TMD_mobile\\data\\iostesting\\Inanna\\InannaLua\\WebEnvironment.xml'
                             def oldContent = params.ENVIRONMENT_TYPE == 'production' ? '<type>iostesting</type>' : '<type>production</type>'
                             def newContent = "<type>${params.ENVIRONMENT_TYPE}</type>"
-                            def command = "powershell -Command \"(Get-Content ${filePath}).replace('${oldContent}', '${newContent}') | Set-Content ${filePath}\""
+                            def command = "powershell -Command \"(Get-Content ${filePath}).replace('${oldContent}', '${newContent}') | Set-Content -Encoding utf8 ${filePath}\""
                             sshCommand remote: remote, command: command
                             //中斷點
                             input "Fix WebEnvironment stage is complete. Proceed?"
