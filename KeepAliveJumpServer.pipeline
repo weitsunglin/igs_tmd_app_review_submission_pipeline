@@ -30,7 +30,6 @@ pipeline {
             }
         }
     }
-}
 
 def getRemoteConfig(host, user, password) {
     def remote = [:]
