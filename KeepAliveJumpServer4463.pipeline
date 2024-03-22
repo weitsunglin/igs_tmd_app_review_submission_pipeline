@@ -13,13 +13,8 @@ pipeline {
                         try {
                             withCredentials([usernamePassword(credentialsId: REMOTE_CREDENTIALS, passwordVariable: 'REMOTE_PASSWORD', usernameVariable: 'REMOTE_USER')]) {
                                 def remote = getRemoteConfig("192.168.44.63", REMOTE_USER, REMOTE_PASSWORD)
-                                def keepalive4463Command = "ping -t 192.168.44.63"
+                                def keepalive4463Command = "while true; do echo 'Keep alive'; sleep 60; done"
                                 sshCommand remote: remote, command: keepalive4463Command
-                            }
-                            withCredentials([usernamePassword(credentialsId: REMOTE_CREDENTIALS2, passwordVariable: 'REMOTE_PASSWORD', usernameVariable: 'REMOTE_USER')]) {
-                                def remote = getRemoteConfig("192.168.44.102", REMOTE_USER, REMOTE_PASSWORD)
-                                def keepalive44102Command = "ping -t 192.168.44.102"
-                                sshCommand remote: remote, command: keepalive44102Command
                             }
                         } 
                         catch (Exception e) {
