@@ -3,6 +3,7 @@ pipeline {
 
     environment {
         REMOTE_CREDENTIALS ='remote4463_login'
+        REMOTE_CREDENTIALS2 = 'remote44102_login'
     }
 
     stages {
@@ -12,8 +13,13 @@ pipeline {
                         try {
                             withCredentials([usernamePassword(credentialsId: REMOTE_CREDENTIALS, passwordVariable: 'REMOTE_PASSWORD', usernameVariable: 'REMOTE_USER')]) {
                                 def remote = getRemoteConfig("192.168.44.63", REMOTE_USER, REMOTE_PASSWORD)
-                                def keepaliveCommand = "ping -t 192.168.44.63"
-                                sshCommand remote: remote, command: keepaliveCommand
+                                def keepalive4463Command = "ping -t 192.168.44.63"
+                                sshCommand remote: remote, command: keepalive4463Command
+                            }
+                            withCredentials([usernamePassword(credentialsId: REMOTE_CREDENTIALS2, passwordVariable: 'REMOTE_PASSWORD', usernameVariable: 'REMOTE_USER')]) {
+                                def remote = getRemoteConfig("192.168.44.102", REMOTE_USER, REMOTE_PASSWORD)
+                                def keepalive44102Command = "ping -t 192.168.44.102"
+                                sshCommand remote: remote, command: keepalive44102Command
                             }
                         } 
                         catch (Exception e) {
