@@ -13,7 +13,7 @@ pipeline {
                         try {
                             withCredentials([usernamePassword(credentialsId: REMOTE_CREDENTIALS, passwordVariable: 'REMOTE_PASSWORD', usernameVariable: 'REMOTE_USER')]) {
                                 def remote = getRemoteConfig("192.168.44.63", REMOTE_USER, REMOTE_PASSWORD)
-                                def keepalive4463Command = "while true; do echo 'Keep alive'; sleep 60; done"
+                                def keepalive4463Command = "echo 'Keep alive'"
                                 sshCommand remote: remote, command: keepalive4463Command
                             }
                         } 
