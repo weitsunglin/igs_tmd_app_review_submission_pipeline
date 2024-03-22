@@ -186,6 +186,21 @@ pipeline {
                 }
             }
         }
+
+         stage('Mode production app to desktop') {
+            steps {
+                script {
+                    dir(PROJECT_WORKSPACE_PATH) {
+                        try {
+                           sh 'mv /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/build/* /Users/tmd/Desktop/production_ios_app/'
+                        } catch (Exception e) {
+                            echo "Mode production app to desktop error: ${e.message}"
+                            throw e 
+                        }
+                    }
+                }
+            }
+        }
     }
     
     post {

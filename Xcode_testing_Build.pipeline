@@ -181,6 +181,20 @@ pipeline {
                 }
             }
         }
+        stage('Mode testing app to desktop') {
+            steps {
+                script {
+                    dir(PROJECT_WORKSPACE_PATH) {
+                        try {
+                           sh 'mv "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/build/滿貫大亨Test.ipa" "/Users/tmd/Desktop/testing_app_will_go_gcp/iosipa.ipa"'
+                        } catch (Exception e) {
+                            echo "Mode testing app to desktop error: ${e.message}"
+                            throw e 
+                        }
+                    }
+                }
+            }
+        }
     }
     
     post {
