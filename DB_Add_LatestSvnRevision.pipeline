@@ -3,7 +3,6 @@ pipeline {
 
     parameters {
         string(name: 'BUILDER_NAME', defaultValue: 'weitsunglin', description: '你的名字')
-        choice(name: 'DB_ENVIORNMENT', choices: [ '外部','二測'], description: '選擇DB環境')
         string(name: 'NEW_IOS_VERSION', defaultValue: '1.1.xxx', description: '版本號:安卓單數1.1.175/IOS雙數1.1.184')
     }
 
@@ -31,12 +30,6 @@ pipeline {
             steps {
                 script { 
                     try {
-                        if (params.DB_ENVIORNMENT == '外部') {
-                            MSSQL_SERVER = '10.100.20.17'
-                        } else {
-                            MSSQL_SERVER = 'db-gt-test24.gametower.com.tw'
-                        }
-
                         NEWIOSVERSION = params.NEW_IOS_VERSION  
 
                         def versionParts = NEWIOSVERSION.tokenize('.')
@@ -51,9 +44,35 @@ pipeline {
             }
         }
         
-        stage('Insert DB LatestSvnRevision') {
+        stage('Insert 二測 DB LatestSvnRevision') {
             steps {
                 script {
+                    MSSQL_SERVER = 'db-gt-test24.gametower.com.tw'
+
+                    withCredentials([usernamePassword(credentialsId: REMOTE_CREDENTIALS, passwordVariable: 'REMOTE_PASSWORD', usernameVariable: 'REMOTE_USER')]) {
+                        def remote = getRemoteConfig("192.168.44.63", REMOTE_USER, REMOTE_PASSWORD)
+                        withCredentials([usernamePassword(credentialsId: TMD_DB, usernameVariable: 'DB_ACCOUNT', passwordVariable: 'DB_PASSWORD')]) {
+                            try {
+                                def insert_dbCommand = "sqlcmd -S ${MSSQL_SERVER} -d ${MSSQL_DATABASE} -U ${DB_ACCOUNT} -P ${DB_PASSWORD} -Q \"INSERT INTO [GameTower2_TMD].[dbo].[Client_LatestSvnRevision] SELECT '${NEWIOSVERSION}', [path], [revision] FROM [GameTower2_TMD].[dbo].[Client_LatestSvnRevision] where [deviceVersion] = '${PRE_VERSION}'\""
+                                sshCommand remote: remote, command: insert_dbCommand
+
+                                def confirm_dbCommand = "sqlcmd -S ${MSSQL_SERVER} -d ${MSSQL_DATABASE} -U ${DB_ACCOUNT} -P ${DB_PASSWORD} -Q \"SELECT TOP 999 * FROM Client_LatestSvnRevision WHERE [deviceVersion] = '${NEWIOSVERSION}'\""
+                                sshCommand remote: remote, command: confirm_dbCommand
+                            } catch (Exception e) {
+                                echo "Caught an exception in 'Insert DB LatestSvnRevision' stage: ${e.getMessage()}"
+                                throw e
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Insert 外部 DB LatestSvnRevision') {
+            steps {
+                script {
+                    MSSQL_SERVER = '10.100.20.17'
+
                     withCredentials([usernamePassword(credentialsId: REMOTE_CREDENTIALS, passwordVariable: 'REMOTE_PASSWORD', usernameVariable: 'REMOTE_USER')]) {
                         def remote = getRemoteConfig("192.168.44.63", REMOTE_USER, REMOTE_PASSWORD)
                         withCredentials([usernamePassword(credentialsId: TMD_DB, usernameVariable: 'DB_ACCOUNT', passwordVariable: 'DB_PASSWORD')]) {
@@ -80,14 +99,14 @@ pipeline {
             script {
                 if (currentBuild.result == 'SUCCESS') {
                     emailext(
-                        subject: "SUCCESS Add ${params.DB_ENVIORNMENT} DB LatestSvnRevision",
+                        subject: "SUCCESS Add 二測及外部 DB LatestSvnRevision",
                         body: "SUCCESS",
                         to: "${params.BUILDER_NAME}@igs.com.tw"
                     )
                 } 
                 else {
                     emailext(
-                        subject: "Failure Add ${params.DB_ENVIORNMENT} DB LatestSvnRevision",
+                        subject: "Failure Add 二測及外部  DB LatestSvnRevision",
                         body: "Failure",
                         to: "${params.BUILDER_NAME}@igs.com.tw"
                     )
