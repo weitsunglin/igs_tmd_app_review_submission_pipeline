@@ -130,9 +130,54 @@ pipeline {
                                 path = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/MDLua"
                             } else if (sourceSubDir == 'XXX') {
                                 path = ""
-                            } else {
-                                path = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/${sourceSubDir}Lua"
+                            }  
+                            else if (sourceSubDir == 'TMD_Baccarat') {
+                               path = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/BaccaratLua"
                             }
+                            else if (sourceSubDir == 'WuKong') {
+                               path = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/TripleWuKongSlotLua"
+                            }
+                            else if (sourceSubDir == 'Dinosaur') {
+                               path = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/DinosaurEggLua"
+                            }
+                            else if (sourceSubDir == 'TMD_StarPoseidon') {
+                               path = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/StarPoseidonLua"
+                            }
+                            else if (sourceSubDir == 'TMD_Aladdin') {
+                               path = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/AladdinLua"
+                            }
+                            else if (sourceSubDir == 'TMD_RomaX') {
+                               path = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/RomaSlotXLua"
+                            }
+                            else if (sourceSubDir == 'TMD_Luck2') {
+                               path = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/Luck2Lua"
+                            }
+                            else if (sourceSubDir == 'TMD_Luck') {
+                               path = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/LuckSlotLua"
+                            }
+                            else if (sourceSubDir == 'TMD_GemSlot') {
+                               path = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/GemSlotLua"
+                            }
+
+                            else if (sourceSubDir == 'TMD_FAFAFA') {
+                               path = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/FastFaFaFaLua"
+                            }
+
+                            else if (sourceSubDir == 'Super8') {
+                               path = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/Super8SlotLua"
+                            }
+
+                            else if (sourceSubDir == 'SicBo') {
+                               path = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/SICBOLua"
+                            }
+
+                            else if (sourceSubDir == 'Caishen') {
+                               path = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/CaishenSlotLua"
+                            }
+
+                            else {
+                                path = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/${sourceSubDir}Lua"
+                            }                     
 
                             if (!path.isEmpty()) {
                                 decompressZipFiles(path)

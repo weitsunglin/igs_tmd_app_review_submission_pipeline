@@ -293,7 +293,6 @@ def generateFfsBatchContent(String newVersion) {
             <Item>*\\desktop.ini</Item>
             <Item>*\\thumbs.db</Item>
             <Item>*\\.Ds_Store</Item>
-            <Item>*\\WebEnvironment.xml</Item>
             <Item>*\\LocalVersion.json</Item>
             <Item>*\\AllVersion.json</Item>
             <Item>*\\CheckVersion.json</Item>
