@@ -45,6 +45,13 @@ pipeline {
                                 }
                             }
                         }
+
+                        dir("${TMD_RESOURCES_URL}SouthPark/") {
+                            withCredentials([usernamePassword(credentialsId: SVM_CREDENTIALS_ID, usernameVariable: 'SVN_USER', passwordVariable: 'SVN_PASSWORD')]) {
+                                sh "${SVN_INSTALL_PATH} update http://192.168.1.183/svn/SouthPark/trunk --username \${SVN_USER} --password \$SVN_PASSWORD"
+                            }
+                        }
+                        
                     } catch (Exception e) {
                         echo "SVN Switching Resources with error: ${e.message}"
                         throw e
