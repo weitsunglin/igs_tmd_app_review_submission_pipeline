@@ -172,22 +172,9 @@ pipeline {
             }
         }
 
-        stage('Xcode Distrubution') {
-            steps {
-                script {
-                    dir(PROJECT_WORKSPACE_PATH) {
-                        try {
-                            sh 'open "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/build/SouthPark.xcarchive"'
-                        } catch (Exception e) {
-                            echo "Xcode Distrubution failed with error: ${e.message}"
-                            throw e 
-                        }
-                    }
-                }
-            }
-        }
 
-         stage('Mode production app to desktop') {
+
+        stage('Mode production app to desktop') {
             steps {
                 script {
                     dir(PROJECT_WORKSPACE_PATH) {
@@ -195,6 +182,21 @@ pipeline {
                            sh 'mv /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/build/* /Users/tmd/Desktop/production_ios_app/'
                         } catch (Exception e) {
                             echo "Mode production app to desktop error: ${e.message}"
+                            throw e 
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Xcode Distrubution') {
+            steps {
+                script {
+                    dir(PROJECT_WORKSPACE_PATH) {
+                        try {
+                            sh 'open "/Users/tmd/Desktop/production_ios_app/SouthPark.xcarchive"'
+                        } catch (Exception e) {
+                            echo "Xcode Distrubution failed with error: ${e.message}"
                             throw e 
                         }
                     }
