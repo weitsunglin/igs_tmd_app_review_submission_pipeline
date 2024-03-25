@@ -17,10 +17,19 @@ pipeline {
                     withCredentials([usernamePassword(credentialsId: REMOTE_CREDENTIALS, passwordVariable: 'PASSWORD', usernameVariable: 'USER')]) {
                         try {
                             def remote = getRemoteConfig('192.168.44.102', USER, PASSWORD)
-                            def filePath = 'D:\\webGame\\Game\\TMD_mobile\\data\\iostesting\\Inanna\\InannaLua\\WebEnvironment.xml'
-                            def oldContent = params.ENVIRONMENT_TYPE == 'production' ? '<type>iostesting</type>' : '<type>production</type>'
-                            def newContent = "<type>${params.ENVIRONMENT_TYPE}</type>"
-                            def command = "powershell -Command \"(Get-Content ${filePath}).replace('${oldContent}', '${newContent}') | Set-Content -Encoding utf8 ${filePath}\""
+                            def sourceFilePath = ''
+                            def destinationFilePath = 'D:/webGame/Game/TMD_mobile/data/iostesting/Inanna/InannaLua/WebEnvironment.xml'
+
+                            if (params.ENVIRONMENT_TYPE == 'production')
+                            {
+                               sourceFilePath = 'C:/Users/Administrator/Desktop/TMD_Client/送審專用/jenkins_update_cdn_gcp/WebEnv_production/WebEnvironment.xml'
+                            }
+                            else if (params.ENVIRONMENT_TYPE == 'iostesting')
+                            {
+                                sourceFilePath = 'C:/Users/Administrator/Desktop/TMD_Client/送審專用/jenkins_update_cdn_gcp/WebEnv_iostesting/WebEnvironment.xml'
+                            }
+
+                            def command = "scp ${sourceFilePath} ${remote}:${destinationFilePath}"
                             sshCommand remote: remote, command: command
 
                             input "Fix WebEnvironment stage is complete. Proceed?"
