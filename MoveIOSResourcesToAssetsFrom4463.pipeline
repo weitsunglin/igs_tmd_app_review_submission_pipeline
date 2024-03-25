@@ -125,7 +125,8 @@ pipeline {
                                 sh "cp -R ${folderPath} ${destinationPath}"
                             }
 
-                            def path = ""
+                            def path = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/${sourceSubDir}Lua"
+
                             if (sourceSubDir == 'ManganDahen') {
                                 path = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/MDLua"
                             } else if (sourceSubDir == 'XXX') {
@@ -158,26 +159,18 @@ pipeline {
                             else if (sourceSubDir == 'TMD_GemSlot') {
                                path = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/GemSlotLua"
                             }
-
                             else if (sourceSubDir == 'TMD_FAFAFA') {
                                path = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/FastFaFaFaLua"
                             }
-
                             else if (sourceSubDir == 'Super8') {
                                path = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/Super8SlotLua"
                             }
-
                             else if (sourceSubDir == 'SicBo') {
                                path = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/SICBOLua"
                             }
-
                             else if (sourceSubDir == 'Caishen') {
                                path = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/CaishenSlotLua"
-                            }
-
-                            else {
-                                path = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/${sourceSubDir}Lua"
-                            }                     
+                            }                 
 
                             if (!path.isEmpty()) {
                                 decompressZipFiles(path)
