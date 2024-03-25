@@ -179,6 +179,7 @@ pipeline {
                 script {
                     dir(PROJECT_WORKSPACE_PATH) {
                         try {
+                           sh 'rm -rf /Users/tmd/Desktop/production_ios_app/*'
                            sh 'mv /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/build/* /Users/tmd/Desktop/production_ios_app/'
                         } catch (Exception e) {
                             echo "Mode production app to desktop error: ${e.message}"
