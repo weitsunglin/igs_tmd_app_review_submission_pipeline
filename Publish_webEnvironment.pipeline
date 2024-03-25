@@ -16,20 +16,18 @@ pipeline {
                 script {
                     withCredentials([usernamePassword(credentialsId: REMOTE_CREDENTIALS, passwordVariable: 'PASSWORD', usernameVariable: 'USER')]) {
                         try {
-                        def remote = getRemoteConfig('192.168.44.102', USER, PASSWORD)
-                        def sourceFilePath = ''
-                        def destinationFilePath = 'D:/webGame/Game/TMD_mobile/data/iostesting/Inanna/InannaLua/WebEnvironment.xml'
+                            def remote = getRemoteConfig('192.168.44.102', USER, PASSWORD)
+                            def sourceFilePath = ''
+                            def destinationFilePath = 'D:/webGame/Game/TMD_mobile/data/iostesting/Inanna/InannaLua/WebEnvironment.xml'
 
-                        if (params.ENVIRONMENT_TYPE == 'production') {
-                            sourceFilePath = 'C:/Users/Administrator/Desktop/TMD_Client/送審專用/jenkins_update_cdn_gcp/WebEnv_production/WebEnvironment.xml'
-                        } else if (params.ENVIRONMENT_TYPE == 'iostesting') {
-                            sourceFilePath = 'C:/Users/Administrator/Desktop/TMD_Client/送審專用/jenkins_update_cdn_gcp/WebEnv_iostesting/WebEnvironment.xml'
-                        }
+                            if (params.ENVIRONMENT_TYPE == 'production') {
+                                sourceFilePath = 'C:/Users/Administrator/Desktop/TMD_Client/送審專用/jenkins_update_cdn_gcp/WebEnv_production/WebEnvironment.xml'
+                            } else if (params.ENVIRONMENT_TYPE == 'iostesting') {
+                                sourceFilePath = 'C:/Users/Administrator/Desktop/TMD_Client/送審專用/jenkins_update_cdn_gcp/WebEnv_iostesting/WebEnvironment.xml'
+                            }
 
-                        // 使用 xcopy 命令来复制文件到远程计算机上
-                        def command = "xcopy /Y ${sourceFilePath} ${destinationFilePath}"
-                        sshCommand remote: remote, command: command
-
+                            def command = "powershell -Command \"Copy-Item -Path '${sourceFilePath}' -Destination '${destinationFilePath}' -Force\""
+                            sshCommand remote: remote, command: command
 
                             input "Fix WebEnvironment stage is complete. Proceed?"
                         } catch (Exception e) {
