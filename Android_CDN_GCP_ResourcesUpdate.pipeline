@@ -18,8 +18,9 @@ pipeline {
                     withCredentials([usernamePassword(credentialsId: REMOTE_CREDENTIALS, passwordVariable: 'PASSWORD', usernameVariable: 'USER')]) {
                         try {
                             def remote = getRemoteConfig('192.168.44.102', USER, PASSWORD)
-                            def command = "C:/Users/Administrator/Desktop/TMD_Client/送審專用/jenkins_update_cdn_gcp/android/1_GCP更新Resource.bat"
-                            sshCommand remote: remote, command: command
+                            //def command = "C:/Users/Administrator/Desktop/TMD_Client/送審專用/jenkins_update_cdn_gcp/android/1_GCP更新Resource.bat"
+                            def gsutilCommand = "gsutil rsync -m -x '.*\\.DS_Store$|.*WebEnvironment\\.xml$|.*Version\\.json$' -d -r 'D:/webgame/Game/TMD_mobile/data/androidtesting' 'gs://aio-cn/rd5/tmd_mobile/data/androidtesting'"
+                            sshCommand remote: remote, command: gsutilCommand
                         } catch (Exception e) {
                             // 處理錯誤
                             echo "更新GCP資源時發生錯誤: ${e.getMessage()}"
