@@ -377,8 +377,8 @@ def moveWebEnvTo4055(String newVersion) {
     </Filter>
     <FolderPairs>
         <Pair>
-            <Left>D:\TMD_PUBLIC\TMD\testing\40.55_webEnv</Left>
-            <Right>\\10.100.40.55\webgame\Game\TMD_mobile_test\data\_newVersion_\Inanna\InannaLua</Right>
+            <Left>D:\\TMD_PUBLIC\\TMD\testing\\40.55_webEnv</Left>
+            <Right>\\\\10.100.40.55\\webgame\\Game\\TMD_mobile_test\\data\\_newVersion_\\Inanna\\InannaLua</Right>
         </Pair>
     </FolderPairs>
     <Errors Ignore="true" Retry="0" Delay="5"/>
