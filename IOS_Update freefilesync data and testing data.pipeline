@@ -183,7 +183,31 @@ pipeline {
                 }
             }
         }
+        
+        stage('Move WebEnv to 4055') {
+            steps {
+                script {
 
+                    dir(PROJ_ANDROID_URL) {
+                        def ffsContent = moveWebEnvTo4055(params.NEW_VERSION)
+                        writeFile file: '40.55_webEnv.ffs_batch', text: ffsContent
+
+                        def destinationFolder = "/Volumes/TMD_PUBLIC/TMD/testing/"
+                        def sourceFolder = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/40.55_webEnv.ffs_batch"
+                        sh "cp -r ${sourceFolder}* ${destinationFolder}"
+                    }
+
+                    withCredentials([usernamePassword(credentialsId: REMOTE_CREDENTIALS, passwordVariable: 'REMOTE_PASSWORD', usernameVariable: 'REMOTE_USER')]) {
+                        def remote = getRemoteConfig("192.168.44.63", REMOTE_USER, REMOTE_PASSWORD)
+                        try {
+                            sshCommand remote: remote, command: "D:/TMD_PUBLIC/TMD/testing/40.55_webEnv.bat"
+                        } catch (Exception e) {
+                            echo "Error in 'Move testing game resources to 4055': ${e.getMessage()}"
+                        }
+                    }
+                }
+            }
+        }
 
         stage('Good guy will clean environment') {
             steps {
@@ -281,9 +305,56 @@ def generateFfsBatchContent(String newVersion) {
             <Left>D:\\TMD_PUBLIC\\TMD\\testing\\_newVersion_</Left>
             <Right>\\\\10.100.40.55\\webgame\\Game\\TMD_mobile_test\\data\\_newVersion_</Right>
         </Pair>
-         <Pair>
-            <Left>D:\\TMD_PUBLIC\\TMD\\testing\\40.55_webEnv</Left>
-            <Right>\\\\10.100.40.55\\webgame\\Game\\TMD_mobile_test\\data\\_newVersion_\\Inanna\\InannaLua</Right>
+    </FolderPairs>
+    <Errors Ignore="true" Retry="0" Delay="5"/>
+    <PostSyncCommand Condition="Completion"/>
+    <LogFolder/>
+    <EmailNotification Condition="Always"/>
+    <GridViewType>Action</GridViewType>
+    <Batch>
+        <ProgressDialog Minimized="false" AutoClose="true"/>
+        <ErrorDialog>Show</ErrorDialog>
+        <PostSyncAction>None</PostSyncAction>
+    </Batch>
+</FreeFileSync>'''
+
+    template = template.replaceAll("_newVersion_", newVersion)
+    
+    return template
+}
+
+
+
+
+
+def moveWebEnvTo4055(String newVersion) {
+    String template = '''<?xml version="1.0" encoding="utf-8"?>
+<FreeFileSync XmlType="BATCH" XmlFormat="19">
+    <Notes/>
+    <Compare>
+        <Variant>TimeAndSize</Variant>
+        <Symlinks>Exclude</Symlinks>
+        <IgnoreTimeShift/>
+    </Compare>
+    <Synchronize>
+        <Variant>Update</Variant>
+        <DetectMovedFiles>false</DetectMovedFiles>
+        <DeletionPolicy>RecycleBin</DeletionPolicy>
+        <VersioningFolder Style="Replace"/>
+    </Synchronize>
+    <Filter>
+        <Include>
+            <Item>*</Item>
+        </Include>
+        <Exclude/>
+        <SizeMin Unit="None">0</SizeMin>
+        <SizeMax Unit="None">0</SizeMax>
+        <TimeSpan Type="None">0</TimeSpan>
+    </Filter>
+    <FolderPairs>
+        <Pair>
+            <Left>D:\TMD_PUBLIC\TMD\testing\40.55_webEnv</Left>
+            <Right>\\10.100.40.55\webgame\Game\TMD_mobile_test\data\_newVersion_\Inanna\InannaLua</Right>
         </Pair>
     </FolderPairs>
     <Errors Ignore="true" Retry="0" Delay="5"/>
@@ -302,3 +373,17 @@ def generateFfsBatchContent(String newVersion) {
     
     return template
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
