@@ -281,6 +281,10 @@ def generateFfsBatchContent(String newVersion) {
             <Left>D:\\TMD_PUBLIC\\TMD\\testing\\_newVersion_</Left>
             <Right>\\\\10.100.40.55\\webgame\\Game\\TMD_mobile_test\\data\\_newVersion_</Right>
         </Pair>
+         <Pair>
+            <Left>D:\\TMD_PUBLIC\\TMD\\testing\\40.55_webEnv</Left>
+            <Right>\\10.100.40.55\webgame\Game\TMD_mobile_test\data\_newVersion_\Inanna\InannaLua</Right>
+        </Pair>
     </FolderPairs>
     <Errors Ignore="true" Retry="0" Delay="5"/>
     <PostSyncCommand Condition="Completion"/>
@@ -294,7 +298,6 @@ def generateFfsBatchContent(String newVersion) {
     </Batch>
 </FreeFileSync>'''
 
-    // 替换模板中的版本号
     template = template.replaceAll("_newVersion_", newVersion)
     
     return template
