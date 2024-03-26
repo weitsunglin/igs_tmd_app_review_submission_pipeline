@@ -15,7 +15,6 @@ pipeline {
     }
 
     stages {
-        
         stage('Pack cocos') {
             steps {
                 script {
@@ -109,7 +108,6 @@ pipeline {
             }
         }
 
-
         stage('Move Basic Game Resource to IOS Assets from 4463') {
             steps {
                 script {
@@ -129,9 +127,38 @@ pipeline {
 
                             if (sourceSubDir == 'ManganDahen') {
                                 path = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/MDLua"
-                            } else if (sourceSubDir == 'XXX') {
-                                path = ""
-                            }  
+                            }        
+
+                            if (!path.isEmpty()) {
+                                decompressZipFiles(path)
+                            }
+                        }
+                    } catch (Exception e) {
+                        echo "Error in 'Move Basic Game Resource to IOS Assets from 4463': ${e.getMessage()}"
+                    }
+                }
+            }
+        }
+
+        stage('Move Review Game Resource to IOS Assets from 4463') {
+            steps {
+                script {
+                    try {
+                        def resources = params.IOS_RESOURCES.split(" ")
+                        resources.each { resourceName ->
+                            def sourceSubDir = resourceName
+                            def sourcePath = "${env.TMD_IOS_SOURCE}/${sourceSubDir}"
+                            def matchingFolders = sh(script: "find ${sourcePath} -type d \\( -name '*Lua' -o -name '*Resources' \\)", returnStdout: true).trim().split("\n")
+
+                            matchingFolders.each { folderPath ->
+                                def destinationPath = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/"
+                                sh "cp -R ${folderPath} ${destinationPath}"
+                            }
+
+                            def path = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/${sourceSubDir}Lua"
+                            if (sourceSubDir == 'XXX') {
+                                path = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/XXXLua"
+                            } 
                             else if (sourceSubDir == 'TMD_Baccarat') {
                                path = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/BaccaratLua"
                             }
@@ -170,39 +197,6 @@ pipeline {
                             }
                             else if (sourceSubDir == 'Caishen') {
                                path = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/CaishenSlotLua"
-                            }                 
-
-                            if (!path.isEmpty()) {
-                                decompressZipFiles(path)
-                            }
-                        }
-                    } catch (Exception e) {
-                        echo "Error in 'Move Basic Game Resource to IOS Assets from 4463': ${e.getMessage()}"
-                    }
-                }
-            }
-        }
-
-        stage('Move Review Game Resource to IOS Assets from 4463') {
-            steps {
-                script {
-                    try {
-                        def resources = params.IOS_RESOURCES.split(" ")
-                        resources.each { resourceName ->
-                            def sourceSubDir = resourceName
-                            def sourcePath = "${env.TMD_IOS_SOURCE}/${sourceSubDir}"
-                            def matchingFolders = sh(script: "find ${sourcePath} -type d \\( -name '*Lua' -o -name '*Resources' \\)", returnStdout: true).trim().split("\n")
-
-                            matchingFolders.each { folderPath ->
-                                def destinationPath = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/"
-                                sh "cp -R ${folderPath} ${destinationPath}"
-                            }
-
-                            def path = ""
-                            if (sourceSubDir == 'XXX') {
-                                path = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/XXXLua"
-                            } else {
-                                path = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/SouthPark_release/${sourceSubDir}Lua"
                             }
 
                             if (!path.isEmpty()) {
@@ -246,7 +240,6 @@ pipeline {
                 }
             }
         }
-
 
         stage('Give permission') {
             steps {
