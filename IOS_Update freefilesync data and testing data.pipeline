@@ -101,7 +101,7 @@ pipeline {
                             ${svn} update /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/targetVersion.json --username \$SVN_USER --password \$SVN_PASSWORD --non-interactive
                             """
                         }
-
+                        sh "chmod +x /Users/tmd/Documents/tmd/SouthPark/Jenkins/SyncFileTemp/replace_jenkins.sh"
                         sh "/Users/tmd/Documents/tmd/SouthPark/Jenkins/SyncFileTemp/replace_jenkins.sh ${GAMEENV}"
                     } catch (Exception e) {
                         echo "Error in 'ReplaceBatchFile': ${e.getMessage()}"

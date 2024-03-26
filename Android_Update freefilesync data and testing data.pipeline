@@ -120,7 +120,7 @@ pipeline {
                             ${svn} update /Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/targetVersion.json --username \$SVN_USER --password \$SVN_PASSWORD --non-interactive
                             """
                         }
-
+                        sh "chmod +x /Users/tmd/Documents/tmd/SouthPark/Jenkins/SyncFileTemp/replace_jenkins.sh"
                         sh "/Users/tmd/Documents/tmd/SouthPark/Jenkins/SyncFileTemp/replace_jenkins.sh ${GAMEENV}"
                     } catch (Exception e) {
                         echo "ReplaceBatchFile stage failed: ${e.getMessage()}"
@@ -307,6 +307,10 @@ def generateFfsBatchContent(String newVersion) {
         <Pair>
             <Left>D:\\TMD_PUBLIC\\TMD\\testing\\_newVersion_</Left>
             <Right>\\\\10.100.40.55\\webgame\\Game\\TMD_mobile_test\\data\\_newVersion_</Right>
+        </Pair>
+        <Pair>
+            <Left>D:\\TMD_PUBLIC\\TMD\\testing\\40.55_webEnv</Left>
+            <Right>\\10.100.40.55\webgame\Game\TMD_mobile_test\data\_newVersion_\Inanna\InannaLua</Right>
         </Pair>
     </FolderPairs>
     <Errors Ignore="true" Retry="0" Delay="5"/>
