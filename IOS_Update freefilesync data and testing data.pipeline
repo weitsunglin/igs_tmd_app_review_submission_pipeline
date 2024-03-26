@@ -190,17 +190,17 @@ pipeline {
 
                     dir(PROJ_ANDROID_URL) {
                         def ffsContent = moveWebEnvTo4055(params.NEW_VERSION)
-                        writeFile file: '40.55_webEnv.ffs_batch', text: ffsContent
+                        writeFile file: '4055_webEnv.ffs_batch', text: ffsContent
 
                         def destinationFolder = "/Volumes/TMD_PUBLIC/TMD/testing/"
-                        def sourceFolder = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/40.55_webEnv.ffs_batch"
+                        def sourceFolder = "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.android/4055_webEnv.ffs_batch"
                         sh "cp -r ${sourceFolder}* ${destinationFolder}"
                     }
 
                     withCredentials([usernamePassword(credentialsId: REMOTE_CREDENTIALS, passwordVariable: 'REMOTE_PASSWORD', usernameVariable: 'REMOTE_USER')]) {
                         def remote = getRemoteConfig("192.168.44.63", REMOTE_USER, REMOTE_PASSWORD)
                         try {
-                            sshCommand remote: remote, command: "D:/TMD_PUBLIC/TMD/testing/40.55_webEnv.bat"
+                            sshCommand remote: remote, command: "D:/TMD_PUBLIC/TMD/testing/4055_webEnv.bat"
                         } catch (Exception e) {
                             echo "Error in 'Move testing game resources to 4055': ${e.getMessage()}"
                         }
@@ -353,7 +353,7 @@ def moveWebEnvTo4055(String newVersion) {
     </Filter>
     <FolderPairs>
         <Pair>
-            <Left>D:\\TMD_PUBLIC\\TMD\\testing\\40.55_webEnv</Left>
+            <Left>D:\\TMD_PUBLIC\\TMD\\testing\\4055_webEnv</Left>
             <Right>\\\\10.100.40.55\\webgame\\Game\\TMD_mobile_test\\data\\_newVersion_\\Inanna\\InannaLua</Right>
         </Pair>
     </FolderPairs>
