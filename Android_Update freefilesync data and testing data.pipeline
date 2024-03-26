@@ -245,6 +245,7 @@ pipeline {
                         dir(PROJ_ANDROID_URL){
                             echo 'Cleaning up local .ffs_batch file'
                             sh "rm -f TMD_testing_new_version_to_4055.ffs_batch"
+                            sh "rm -f 4055_webEnv.ffs_batch"
                         }
                     } catch (Exception e) {
                         echo "Failed to clean local environment: ${e.getMessage()}"
@@ -377,7 +378,7 @@ def moveWebEnvTo4055(String newVersion) {
     </Filter>
     <FolderPairs>
         <Pair>
-            <Left>D:\\TMD_PUBLIC\\TMD\testing\\4055_webEnv</Left>
+            <Left>D:\\TMD_PUBLIC\\TMD\\testing\\4055_webEnv</Left>
             <Right>\\\\10.100.40.55\\webgame\\Game\\TMD_mobile_test\\data\\_newVersion_\\Inanna\\InannaLua</Right>
         </Pair>
     </FolderPairs>
