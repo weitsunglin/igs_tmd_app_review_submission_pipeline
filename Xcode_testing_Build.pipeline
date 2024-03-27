@@ -172,7 +172,8 @@ pipeline {
                 script {
                     dir(PROJECT_WORKSPACE_PATH) {
                         try {
-                            sh 'open "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/build/SouthPark.xcarchive"'
+                            echo "Xcode Distrubution"
+                            //sh 'open "/Users/tmd/Documents/tmd/SouthPark/ClientCocos/proj.ios_mac/build/SouthPark.xcarchive"'
                         } catch (Exception e) {
                             echo "Xcode Distrubution failed with error: ${e.message}"
                             throw e 
