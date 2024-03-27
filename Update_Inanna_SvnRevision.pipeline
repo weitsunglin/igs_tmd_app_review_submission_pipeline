@@ -45,7 +45,7 @@ pipeline {
                             //DB
                             withCredentials([usernamePassword(credentialsId: TMD_DB, usernameVariable: 'DB_ACCOUNT', passwordVariable: 'DB_PASSWORD')]) {
                                 //revision + 1
-                                def fix_dbCommand = "sqlcmd -S ${MSSQL_SERVER} -d ${MSSQL_DATABASE} -U ${DB_ACCOUNT} -P ${DB_PASSWORD} -Q \"UPDATE Client_LatestSvnRevision SET revision = revision - 1 WHERE deviceVersion = '${NEWIOSVERSION}'\""
+                                def fix_dbCommand = "sqlcmd -S ${MSSQL_SERVER} -d ${MSSQL_DATABASE} -U ${DB_ACCOUNT} -P ${DB_PASSWORD} -Q \"UPDATE Client_LatestSvnRevision SET revision = revision - 1 WHERE deviceVersion = '${NEWIOSVERSION}' AND path = 'Inanna'\""
                                 sshCommand remote: remote, command: fix_dbCommand
 
                                 //確認revision號碼
