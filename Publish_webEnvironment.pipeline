@@ -28,7 +28,6 @@ pipeline {
 
                             def command = "powershell -Command \"Copy-Item -Path '${sourceFilePath}' -Destination '${destinationFilePath}' -Force\""
                             sshCommand remote: remote, command: command
-                            input "Fix WebEnvironment stage is complete. Proceed?"
                         } catch (Exception e) {
                             echo "An error occurred: ${e.getMessage()}"
                             throw e
